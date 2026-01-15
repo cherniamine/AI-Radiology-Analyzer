@@ -1,0 +1,9 @@
+{
+    "model": "C:\\Users\\MSI\\Desktop\\COVID19-XRay-Classification\\models\\simple_cnn_model.h5",
+    "last_conv_layer": "conv2d_2",
+    "image_size": 128,
+    "total_analyzed": 0,
+    "correct_predictions": 0,
+    "accuracy": 0.0,
+    "results": []
+}

@@ -1,0 +1,88 @@
+{
+    "model_path": "C:\\Users\\MSI\\Desktop\\COVID19-XRay-Classification\\models\\simple_cnn_model.h5",
+    "input_shape": [
+        null,
+        128,
+        128,
+        3
+    ],
+    "output_shape": [
+        null,
+        4
+    ],
+    "layers": [
+        {
+            "index": 0,
+            "name": "conv2d",
+            "type": "Conv2D",
+            "trainable": true
+        },
+        {
+            "index": 1,
+            "name": "max_pooling2d",
+            "type": "MaxPooling2D",
+            "trainable": true
+        },
+        {
+            "index": 2,
+            "name": "conv2d_1",
+            "type": "Conv2D",
+            "trainable": true
+        },
+        {
+            "index": 3,
+            "name": "max_pooling2d_1",
+            "type": "MaxPooling2D",
+            "trainable": true
+        },
+        {
+            "index": 4,
+            "name": "conv2d_2",
+            "type": "Conv2D",
+            "trainable": true
+        },
+        {
+            "index": 5,
+            "name": "max_pooling2d_2",
+            "type": "MaxPooling2D",
+            "trainable": true
+        },
+        {
+            "index": 6,
+            "name": "flatten",
+            "type": "Flatten",
+            "trainable": true
+        },
+        {
+            "index": 7,
+            "name": "dropout",
+            "type": "Dropout",
+            "trainable": true
+        },
+        {
+            "index": 8,
+            "name": "dense",
+            "type": "Dense",
+            "trainable": true
+        },
+        {
+            "index": 9,
+            "name": "dense_1",
+            "type": "Dense",
+            "trainable": true
+        }
+    ],
+    "conv_layers": [
+        "conv2d",
+        "conv2d_1",
+        "conv2d_2"
+    ],
+    "last_conv_layer": "conv2d_2",
+    "class_names": [
+        "COVID",
+        "Lung_Opacity",
+        "NORMAL",
+        "Viral Pneumonia"
+    ],
+    "image_size": 128
+}

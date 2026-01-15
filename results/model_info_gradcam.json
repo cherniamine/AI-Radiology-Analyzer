@@ -1,0 +1,25 @@
+{
+    "model_path": "C:\\Users\\MSI\\Desktop\\COVID19-XRay-Classification\\models\\simple_cnn_model.h5",
+    "input_shape": "(None, 128, 128, 3)",
+    "output_shape": "(None, 4)",
+    "last_conv_layer": "conv2d_2",
+    "conv_layers": [
+        "conv2d",
+        "conv2d_1",
+        "conv2d_2"
+    ],
+    "class_names": [
+        "COVID",
+        "Lung_Opacity",
+        "NORMAL",
+        "Viral Pneumonia"
+    ],
+    "image_size": 128,
+    "test_results": [
+        {
+            "image": "COVID-1.png",
+            "success": false,
+            "output_path": null
+        }
+    ]
+}

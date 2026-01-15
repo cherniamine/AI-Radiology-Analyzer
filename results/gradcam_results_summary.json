@@ -1,0 +1,32 @@
+{
+    "model": "C:\\Users\\MSI\\Desktop\\COVID19-XRay-Classification\\models\\simple_cnn_model.h5",
+    "accuracy": 0.8585775047258979,
+    "last_conv_layer": "conv2d_2",
+    "test_results": [
+        {
+            "image": "COVID-1.png",
+            "path": "C:\\Users\\MSI\\Desktop\\COVID19-XRay-Classification\\data\\COVID\\images\\COVID-1.png",
+            "success": false,
+            "output_path": null
+        },
+        {
+            "image": "Lung_Opacity-1.png",
+            "path": "C:\\Users\\MSI\\Desktop\\COVID19-XRay-Classification\\data\\Lung_Opacity\\images\\Lung_Opacity-1.png",
+            "success": false,
+            "output_path": null
+        },
+        {
+            "image": "Normal-1.png",
+            "path": "C:\\Users\\MSI\\Desktop\\COVID19-XRay-Classification\\data\\NORMAL\\images\\Normal-1.png",
+            "success": false,
+            "output_path": null
+        },
+        {
+            "image": "Viral Pneumonia-1.png",
+            "path": "C:\\Users\\MSI\\Desktop\\COVID19-XRay-Classification\\data\\Viral Pneumonia\\images\\Viral Pneumonia-1.png",
+            "success": false,
+            "output_path": null
+        }
+    ],
+    "timestamp": "2025-12-14T16:28:34"
+}

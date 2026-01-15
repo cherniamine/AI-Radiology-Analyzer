@@ -1,0 +1,15 @@
+{
+    "model_path": "C:\\Users\\MSI\\Desktop\\COVID19-XRay-Classification\\models\\simple_cnn_model.h5",
+    "data_dir": "C:\\Users\\MSI\\Desktop\\COVID19-XRay-Classification\\data",
+    "img_size": 128,
+    "batch_size": 32,
+    "class_names": [
+        "COVID",
+        "Lung_Opacity",
+        "NORMAL",
+        "Viral Pneumonia"
+    ],
+    "last_conv_layer": "conv2d_2",
+    "max_gradcam_per_class": 3,
+    "total_images_processed": 0
+}
