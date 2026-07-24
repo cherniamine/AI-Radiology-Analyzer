@@ -1,0 +1,18 @@
+# Dependances necessaires pour executer la suite de tests (tests/).
+# Volontairement separees de requirements.txt : les modules testes
+# (app/image_utils.py, app/report_generator.py, app/persistence.py,
+# app/assistant/) ne dependent pas de TensorFlow. app/translator.py et
+# app/assistant/ dependent de Streamlit / scikit-learn / requests, mais
+# restent largement plus rapides a installer en CI que TensorFlow. Le
+# fournisseur Ollama n'est jamais reellement appele en tests (mocke via
+# unittest.mock), donc aucun serveur Ollama n'est requis pour la CI.
+
+numpy>=1.21.0
+opencv-python-headless>=4.6.0
+pillow>=9.2.0
+reportlab>=4.0.0
+streamlit>=1.36.0
+python-dotenv>=1.0.0
+scikit-learn>=1.1.0
+requests>=2.28.0
+pytest>=7.4.0

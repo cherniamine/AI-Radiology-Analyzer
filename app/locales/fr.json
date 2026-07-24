@@ -1,0 +1,57 @@
+{
+  "common": {
+    "app_title": "AI Radiology Analyzer",
+    "language_selector_label": "Langue",
+    "disclaimer_short": "Prototype académique — ne remplace pas un avis médical professionnel.",
+    "nav": {
+      "analysis": "Nouvelle analyse",
+      "dashboard": "Dashboard",
+      "reports": "Rapports",
+      "history": "Historique",
+      "assistant": "Assistant IA",
+      "settings": "Paramètres",
+      "about": "À propos"
+    },
+    "yes": "Oui",
+    "no": "Non"
+  },
+  "about": {
+    "version_line": "Version {version} · Prototype académique de recherche",
+    "disclaimer": "<b>Prototype académique.</b> Cette application ne fournit aucune valeur diagnostique et ne remplace en aucun cas l'avis d'un radiologue ou d'un médecin.",
+    "overview_title": "Vue d'ensemble",
+    "overview_text": "Ce projet classe des radiographies pulmonaires en quatre catégories (COVID-19, opacité pulmonaire, pneumonie virale, normal) à l'aide d'un réseau de neurones convolutif, avec cartes d'attention Grad-CAM pour l'explicabilité et génération automatique de rapports structurés.",
+    "accuracy_label": "Exactitude (test)",
+    "training_images_label": "Images d'entraînement",
+    "classes_label": "Classes",
+    "architecture_title": "Architecture",
+    "technologies_title": "Technologies",
+    "limitations_title": "Limites connues",
+    "limitations": [
+      "Le modèle classe l'image entière ; il ne localise aucune anomalie de façon fiable (Grad-CAM indique une zone d'attention, pas une localisation clinique).",
+      "Rappel plus faible sur la classe COVID-19 (~77%) — voir le README pour le détail par classe.",
+      "Jeu de données déséquilibré et non validé cliniquement par un radiologue."
+    ],
+    "roadmap_title": "Feuille de route",
+    "roadmap_done": "✅ Architecture documentée · ✅ Validation des entrées · ✅ Rapport IA (PDF/JSON) · ✅ Grad-CAM comparatif · ✅ Docker · ✅ CI/CD · ✅ Navigation multi-pages · ✅ Persistance (Historique, Dashboard)",
+    "roadmap_pending": "🚧 Internationalisation complète (en/fr/ar) · 🚧 Assistant IA (RAG + Ollama) · 🚧 Paramètres éditables",
+    "footer_built_with": "Construit avec TensorFlow, Streamlit, Plotly et ReportLab."
+  },
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "Configuration actuelle de l'application (lecture seule pour l'instant).",
+    "edit_badge": "🚧 Édition pas encore implémentée (Phase 6)",
+    "rows": {
+      "default_language": "Langue par défaut",
+      "default_theme": "Thème par défaut",
+      "gradcam_alpha": "Opacité Grad-CAM par défaut",
+      "max_upload": "Taille max. d'upload",
+      "assistant_enabled": "Assistant IA activé",
+      "history_enabled": "Historique activé",
+      "pdf_export_enabled": "Export PDF activé",
+      "json_export_enabled": "Export JSON activé",
+      "llm_provider": "Fournisseur LLM (assistant)",
+      "ollama_model": "Modèle Ollama"
+    },
+    "note": "Ces valeurs viennent de `.env` (voir `.env.example`) ou de leurs valeurs par défaut dans `app/config.py`."
+  }
+}

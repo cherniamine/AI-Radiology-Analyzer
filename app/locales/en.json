@@ -1,0 +1,57 @@
+{
+  "common": {
+    "app_title": "AI Radiology Analyzer",
+    "language_selector_label": "Language",
+    "disclaimer_short": "Academic prototype — does not replace professional medical advice.",
+    "nav": {
+      "analysis": "New Analysis",
+      "dashboard": "Dashboard",
+      "reports": "Reports",
+      "history": "History",
+      "assistant": "AI Assistant",
+      "settings": "Settings",
+      "about": "About"
+    },
+    "yes": "Yes",
+    "no": "No"
+  },
+  "about": {
+    "version_line": "Version {version} · Academic research prototype",
+    "disclaimer": "<b>Academic prototype.</b> This application provides no diagnostic value and does not replace the judgment of a radiologist or physician under any circumstances.",
+    "overview_title": "Overview",
+    "overview_text": "This project classifies chest X-rays into four categories (COVID-19, lung opacity, viral pneumonia, normal) using a convolutional neural network, with Grad-CAM attention maps for explainability and automatic structured report generation.",
+    "accuracy_label": "Accuracy (test set)",
+    "training_images_label": "Training images",
+    "classes_label": "Classes",
+    "architecture_title": "Architecture",
+    "technologies_title": "Technologies",
+    "limitations_title": "Known limitations",
+    "limitations": [
+      "The model classifies the whole image; it does not reliably localize any abnormality (Grad-CAM shows an attention area, not a clinical localization).",
+      "Lower recall on the COVID-19 class (~77%) — see the README for the per-class breakdown.",
+      "Imbalanced dataset, not clinically validated by a radiologist."
+    ],
+    "roadmap_title": "Roadmap",
+    "roadmap_done": "✅ Documented architecture · ✅ Input validation · ✅ AI report (PDF/JSON) · ✅ Comparative Grad-CAM · ✅ Docker · ✅ CI/CD · ✅ Multi-page navigation · ✅ Persistence (History, Dashboard)",
+    "roadmap_pending": "🚧 Full internationalization (en/fr/ar) · 🚧 AI Assistant (RAG + Ollama) · 🚧 Editable settings",
+    "footer_built_with": "Built with TensorFlow, Streamlit, Plotly and ReportLab."
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Current application configuration (read-only for now).",
+    "edit_badge": "🚧 Editing not yet implemented (Phase 6)",
+    "rows": {
+      "default_language": "Default language",
+      "default_theme": "Default theme",
+      "gradcam_alpha": "Default Grad-CAM opacity",
+      "max_upload": "Max upload size",
+      "assistant_enabled": "AI Assistant enabled",
+      "history_enabled": "History enabled",
+      "pdf_export_enabled": "PDF export enabled",
+      "json_export_enabled": "JSON export enabled",
+      "llm_provider": "LLM provider (assistant)",
+      "ollama_model": "Ollama model"
+    },
+    "note": "These values come from `.env` (see `.env.example`) or their defaults in `app/config.py`."
+  }
+}

@@ -1,0 +1,37 @@
+# Un seul service aujourd'hui, mais structure pour accueillir facilement
+# des services additionnels plus tard (API FastAPI, Ollama pour l'assistant
+# IA, etc.) sans reorganiser le projet.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-radiology-analyzer:latest
+    container_name: ai-radiology-analyzer
+    ports:
+      - "8501:8501"
+    volumes:
+      # Sans ce volume, l'historique des analyses (SQLite) est perdu a
+      # chaque recreation du conteneur : le systeme de fichiers du
+      # conteneur est ephemere par defaut.
+      - history-data:/app/results
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  history-data:
+
+# Exemple pour une evolution future (non actif) :
+#
+#   api:
+#     build: ./api
+#     ports:
+#       - "8000:8000"
+#     depends_on:
+#       - app

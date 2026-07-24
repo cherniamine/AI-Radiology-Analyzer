@@ -1,5 +1,10 @@
 # AI Radiology Analyzer
 
+[![CI](https://github.com/cherniamine/AI-Radiology-Analyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/cherniamine/AI-Radiology-Analyzer/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.9%2B-blue)
+![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 Classification de radiographies pulmonaires (COVID-19, opacité pulmonaire, pneumonie virale, normal) par réseau de neurones convolutif, avec cartes d'attention Grad-CAM et interface Streamlit interactive.
 
 > **Avertissement.** Ce projet est un prototype académique à but pédagogique. Il ne fournit aucune valeur diagnostique et ne doit en aucun cas remplacer l'avis d'un radiologue ou d'un médecin.
@@ -9,12 +14,18 @@ Classification de radiographies pulmonaires (COVID-19, opacité pulmonaire, pneu
 ## Sommaire
 
 - [Aperçu](#aperçu)
+- [Pipeline](#pipeline)
 - [Résultats](#résultats)
 - [Architecture du modèle](#architecture-du-modèle)
+- [Rapport généré automatiquement](#rapport-généré-automatiquement)
+- [Assistant IA](#assistant-ia)
 - [Jeu de données](#jeu-de-données)
 - [Structure du projet](#structure-du-projet)
+- [Configuration](#configuration)
 - [Installation](#installation)
 - [Utilisation](#utilisation)
+- [Tests et intégration continue](#tests-et-intégration-continue)
+- [Accessibilité](#accessibilité)
 - [Limites connues](#limites-connues)
 - [Pistes d'amélioration](#pistes-damélioration)
 - [Auteur](#auteur)
@@ -25,11 +36,31 @@ Classification de radiographies pulmonaires (COVID-19, opacité pulmonaire, pneu
 
 Le projet couvre l'ensemble du pipeline de classification d'images médicales :
 
+- **Validation des entrées** : rejet des fichiers non exploitables (résolution insuffisante, image quasi uniforme, image couleur non compatible avec une radiographie) avant l'inférence
 - **Prétraitement** des radiographies (redimensionnement, normalisation, augmentation de données)
 - **Entraînement** d'un CNN sur quatre classes de pathologies pulmonaires
 - **Évaluation** quantitative (précision, rappel, F1-score, matrice de confusion)
-- **Explicabilité** via Grad-CAM, pour visualiser les régions de l'image ayant motivé la prédiction
-- **Interface applicative** (Streamlit) permettant de déposer des radiographies et d'obtenir un rapport exportable (CSV) et des visualisations (ZIP)
+- **Explicabilité** via Grad-CAM : vue comparative côte à côte (original / heatmap / fusion), transparence ajustable par image, export PNG individuel de chaque vue
+- **Rapport structuré par gabarit** (`app/report_generator.py`) : observations, impression et recommandation adaptées à la classe prédite, exportable en PDF (original + Grad-CAM + fusion + rapport) et en JSON
+- **Interface applicative** (Streamlit) permettant de déposer des radiographies et d'obtenir un rapport exportable (CSV, PDF, JSON) et des visualisations (ZIP)
+
+## Pipeline
+
+```mermaid
+flowchart TD
+    A["Radiographie\n(PNG / JPG)"] --> B{"Contrôles de validité\nrésolution · variance · saturation"}
+    B -- rejetée --> B1["Image écartée\n+ motif affiché"]
+    B -- valide --> C["Prétraitement\nredimensionnement 128×128 · normalisation"]
+    C --> D["CNN\n3× Conv2D + MaxPooling → Dense"]
+    D --> E["Probabilités par classe\nCOVID · Opacité · Normal · Pneumonie"]
+    D --> F["Grad-CAM\ndernière couche convolutive"]
+    F --> G["Superposition colorée\nsur la radiographie d'origine"]
+    E --> R["Rapport structuré\nfindings · impression · recommandation"]
+    G --> R
+    R --> H["Export\nCSV + ZIP + PDF + JSON"]
+```
+
+L'étape de validation (`validate_xray_image` dans `app/predict.py`) est une heuristique, pas un classifieur : elle écarte les cas évidents avant l'inférence — résolution trop faible, image quasi uniforme (capture vide, fichier corrompu), ou saturation colorimétrique trop élevée pour une radiographie (qui est intrinsèquement en niveaux de gris). Elle a été validée sur 120 images réelles du jeu de données (0 faux rejet) et sur des cas synthétiques (photo couleur, image vide, image trop petite — tous correctement écartés).
 
 ## Résultats
 
@@ -55,7 +86,31 @@ Le dépôt contient deux définitions de modèle :
 - **`models/simple_cnn_model.h5`** — le modèle effectivement utilisé par l'application (`app/predict.py`) et évalué ci-dessus. Il s'agit d'un CNN simple : 3 blocs `Conv2D` + `MaxPooling2D`, suivis d'un `Flatten`, d'un `Dropout` et de deux couches `Dense` (128×128×3 en entrée, 4 classes en sortie).
 - **`src/model.py`** — une architecture alternative basée sur **EfficientNetB0** (transfer learning, poids ImageNet gelés, tête de classification dédiée), prévue pour une itération future mais non utilisée par le modèle livré.
 
-L'explicabilité est assurée par **Grad-CAM**, calculé sur la dernière couche convolutive du modèle, avec superposition colorée (colormap configurable : JET, HOT, PLASMA, VIRIDIS, INFERNO) sur la radiographie d'origine.
+L'explicabilité est assurée par **Grad-CAM**, calculé sur la dernière couche convolutive du modèle (`conv2d_2`). Pour chaque image, l'interface affiche l'image originale, la heatmap seule et la fusion des deux côte à côte, avec une transparence ajustable individuellement par image (sans re-inférence : la heatmap brute est conservée et recomposée à la volée) et un choix de colormap (JET, HOT, PLASMA, VIRIDIS, INFERNO). Chacune des trois vues est téléchargeable séparément en PNG.
+
+> La heatmap Grad-CAM indique une zone d'attention du réseau, pas une segmentation de lésion ni une localisation anatomique validée — voir la section [Rapport généré automatiquement](#rapport-généré-automatiquement).
+
+## Rapport généré automatiquement
+
+Chaque image analysée produit un rapport structuré (`app/report_generator.py`) avec quatre sections : observations, impression, recommandation, et un avertissement systématique. Il est exportable individuellement en **PDF** (radiographie originale + carte Grad-CAM + rapport) depuis chaque carte de résultat, et collectivement en **JSON** pour l'ensemble des images traitées.
+
+**Ce que ce rapport est** : un gabarit texte fixe par classe (COVID-19, opacité pulmonaire, normal, pneumonie virale), où seules les valeurs numériques (confiance, probabilités) varient d'une image à l'autre.
+
+**Ce que ce rapport n'est pas** : un compte-rendu radiologique. Le modèle ne fait que de la classification d'image entière — il ne localise aucune anomalie de façon fiable (pas de lobe, pas de mesure). Le texte généré reste donc volontairement générique et ne mentionne jamais de localisation anatomique précise que le modèle n'a pas réellement déterminée. Le disclaimer fait partie intégrante du texte, du PDF et du JSON, et n'est jamais retiré.
+
+## Assistant IA
+
+Un assistant conversationnel (page **🤖 Assistant IA**) répond aux questions sur le projet — le modèle, Grad-CAM, la confiance, les limites, Docker, l'utilisation de l'application — à partir de sa documentation. Architecture RAG hybride, entièrement locale :
+
+1. **Garde-fou médical** (`app/assistant/safety.py`) — s'exécute **avant tout appel au LLM**. Détecte (par motifs, en français/anglais/arabe) les demandes de diagnostic, traitement, prescription ou avis médical personnel, et refuse poliment sans jamais contacter le modèle de langage. Défense en profondeur : le prompt système impose aussi ce refus au LLM, au cas où.
+2. **Recherche** (`app/assistant/retriever.py`) — recherche par similarité TF-IDF dans `app/assistant/knowledge_base/` (8 documents), sans dépendance à Ollama ni appel réseau.
+3. **Génération** (`app/assistant/providers/ollama_provider.py`) — le contexte trouvé est injecté dans un prompt envoyé à **Ollama, en local**, aucune API payante. Fournisseur configurable via `.env` (`LLM_PROVIDER`, `OLLAMA_BASE_URL`, `OLLAMA_MODEL`) ; l'abstraction `providers/` permet d'ajouter un autre fournisseur (OpenAI, Gemini, Claude...) sans toucher à l'interface ni à l'orchestration RAG.
+
+La langue de réponse suit automatiquement la langue sélectionnée dans l'interface (fr/en/ar).
+
+**Pour l'utiliser** : installez [Ollama](https://ollama.com), lancez `ollama serve`, puis `ollama pull qwen3:8b` (ou le modèle configuré dans `.env`). Sans cela, l'assistant affiche un message d'erreur clair plutôt qu'un plantage.
+
+> **Point d'attention non testé.** Je n'ai pas eu accès à un serveur Ollama dans mon environnement de développement : la construction de la requête HTTP, le parsing de la réponse et la dégradation propre en cas d'indisponibilité sont testés (avec un serveur simulé et avec la vraie absence d'Ollama), mais la qualité réelle des réponses générées par le modèle `qwen3:8b` n'a pas pu être vérifiée. À valider de votre côté avec un Ollama réellement lancé.
 
 ## Jeu de données
 
@@ -76,32 +131,108 @@ Répartition entraînement / validation / test gérée par `src/preprocessing.py
 
 ```
 AI-Radiology-Analyzer/
+├── .github/
+│   └── workflows/
+│       └── ci.yml              # Syntaxe + tests unitaires a chaque push/PR
 ├── app/
-│   └── predict.py            # Application Streamlit (upload, prédiction, Grad-CAM, export)
+│   ├── predict.py              # Point d'entrée : navigation multi-pages (st.navigation), une seule fois le theme + page config
+│   ├── config.py                # Configuration centralisée, chargée depuis .env (voir .env.example)
+│   ├── theme.py                  # Design system partagé (CSS injecté une fois par predict.py)
+│   ├── views/                     # Une page = un module avec une fonction render()
+│   │   ├── analysis.py            # 🔬 Nouvelle analyse — fonctionnalité complète (upload, Grad-CAM, rapport, export)
+│   │   ├── dashboard.py           # 📊 Dashboard — KPI et graphiques réels (persistance)
+│   │   ├── reports.py             # 📄 Rapports — aperçu JSON interactif + copiable, aperçu PDF inline, impression navigateur
+│   │   ├── history.py             # 🕓 Historique — recherche, filtres, suppression, ré-export (persistance)
+│   │   ├── assistant.py           # 🤖 Assistant IA — chat RAG + Ollama (voir app/assistant/)
+│   │   ├── settings.py            # ⚙️ Paramètres — lecture seule de la config réelle (pas encore éditable)
+│   │   ├── about.py                # ℹ️ À propos — contenu réel, ne dépend d'aucune phase
+│   │   └── _stub.py                 # Gabarit partagé pour les pages "pas encore implémenté"
+│   ├── assistant/                  # Assistant IA : RAG hybride (recherche locale + génération Ollama)
+│   │   ├── assistant.py             # API publique (ask()), utilisée par views/assistant.py
+│   │   ├── rag.py                    # Orchestration : sécurité → retrieval → prompts → génération
+│   │   ├── retriever.py               # Recherche TF-IDF sur knowledge_base/ — sans dépendance à Ollama
+│   │   ├── safety.py                   # Détection de demande de diagnostic/traitement — s'exécute AVANT le LLM
+│   │   ├── prompts.py                   # Prompt système, prompt utilisateur, messages traduits (fr/en/ar)
+│   │   ├── providers/                    # Abstraction fournisseur LLM (ajouter un fournisseur sans toucher à l'UI)
+│   │   │   ├── base.py                    # Interface LLMProvider + ProviderUnavailableError
+│   │   │   └── ollama_provider.py          # Implémentation Ollama (seul fournisseur pour l'instant)
+│   │   └── knowledge_base/                # Documentation source de l'assistant (8 fichiers .md)
+│   ├── persistence.py           # Historique des analyses (SQLite local) — sans dépendance à TensorFlow/Streamlit
+│   ├── components.py            # Bibliothèque de composants UI réutilisables (SectionTitle, MetricCard, ConfidenceGauge...)
+│   ├── translator.py            # i18n (fr/en/ar), repli honnête sur clé manquante, RTL
+│   ├── locales/
+│   │   ├── fr.json               # Traductions françaises (langue source, la plus complète)
+│   │   ├── en.json                # Traductions anglaises
+│   │   └── ar.json                 # Traductions arabes
+│   ├── image_utils.py           # Validation d'image, prétraitement, Grad-CAM (post-traitement) — sans TensorFlow
+│   └── report_generator.py     # Génération du rapport structuré + export PDF/JSON
 ├── src/
-│   ├── preprocessing.py       # Générateurs de données (train/val/test)
-│   ├── model.py                # Définition du modèle (EfficientNetB0)
-│   ├── train.py                # Boucle d'entraînement
-│   └── evaluate.py             # Évaluation (rapport de classification, matrice de confusion)
+│   ├── preprocessing.py        # Générateurs de données (train/val/test)
+│   ├── model.py                 # Définition du modèle (EfficientNetB0)
+│   ├── train.py                 # Boucle d'entraînement
+│   └── evaluate.py              # Évaluation (rapport de classification, matrice de confusion)
+├── tests/
+│   ├── test_image_utils.py     # Validation d'image, colorisation/fusion Grad-CAM
+│   ├── test_report_generator.py # Rapport texte, validité JSON, création PDF
+│   ├── test_persistence.py     # Historique SQLite : sauvegarde, recherche, filtres, suppression, statistiques
+│   ├── test_translator.py       # i18n : traduction, repli sur clé manquante, changement de langue, RTL
+│   ├── test_components.py       # Composants UI : HTML généré, seuils de couleur, tri des barres de probabilité
+│   ├── test_accessibility_contrast.py # Ratios de contraste WCAG AA réels, clair et sombre
+│   ├── test_assistant_retriever.py # Recherche TF-IDF sur la base de connaissances
+│   ├── test_assistant_safety.py    # Détection des demandes de diagnostic/traitement (fr/en/ar)
+│   └── test_assistant_rag.py        # Orchestration RAG, prompts, fournisseur Ollama (mocké)
+├── tests_integration/            # Suite complète (AppTest, nécessite TensorFlow — voir Tests)
+│   └── test_predict_apptest.py   # Navigation, upload réel, pipeline, i18n, thème, assistant, PDF/JSON
 ├── notebooks/
 │   ├── 01_exploration.ipynb
 │   ├── 02_preprocessing.ipynb
 │   ├── 03_model_training.ipynb
 │   └── 04_evaluation_gradcam.ipynb
 ├── models/
-│   └── simple_cnn_model.h5    # Modèle entraîné utilisé par l'application
+│   └── simple_cnn_model.h5     # Modèle entraîné utilisé par l'application
 ├── results/
-│   ├── metrics.json           # Métriques d'évaluation par classe
-│   ├── model_info.json        # Détail de l'architecture du modèle livré
+│   ├── metrics.json            # Métriques d'évaluation par classe
+│   ├── model_info.json         # Détail de l'architecture du modèle livré
 │   ├── confusion_matrix.png
-│   └── curves/                 # Courbes d'entraînement
-├── data/                       # Images sources, organisées par classe
-└── requirements.txt
+│   └── curves/                  # Courbes d'entraînement
+├── data/                        # Images sources, organisées par classe
+├── Dockerfile
+├── docker-compose.yml
+├── .dockerignore
+├── .env.example                  # Modèle de configuration (copier en .env, jamais versionné)
+├── LICENSE
+├── requirements.txt
+└── requirements-dev.txt         # Dépendances légères pour les tests / la CI
 ```
 
 > Le fichier `05 Evaluation Gradcam.ipynb` semble être une copie de travail de `04_evaluation_gradcam.ipynb` ; à vérifier et supprimer si redondant.
 
+## Configuration
+
+L'application se configure via des variables d'environnement (voir `.env.example` à la racine) plutôt que par des valeurs codées en dur :
+
+```bash
+cp .env.example .env
+# puis ajuster .env selon votre environnement
+```
+
+Variables disponibles : chemins des artefacts (`MODEL_PATH`, `METRICS_PATH`, `REPORT_OUTPUT`), identité de l'application (`APP_TITLE`, `APP_VERSION`, `DEFAULT_LANGUAGE`, `DEFAULT_THEME`, `DEFAULT_GRADCAM_ALPHA`, `MAX_UPLOAD_SIZE_MB`), interrupteurs de fonctionnalités (`ENABLE_ASSISTANT`, `ENABLE_HISTORY`, `ENABLE_PDF_EXPORT`, `ENABLE_JSON_EXPORT`), et la configuration de l'assistant IA à venir (`LLM_PROVIDER`, `OLLAMA_BASE_URL`, `OLLAMA_MODEL` — voir Roadmap). La page **Paramètres** de l'application affiche la configuration réellement chargée.
+
 ## Installation
+
+### Avec Docker (recommandé)
+
+Prérequis : [Docker](https://docs.docker.com/get-docker/) et Docker Compose.
+
+```bash
+git clone https://github.com/cherniamine/AI-Radiology-Analyzer.git
+cd AI-Radiology-Analyzer
+docker compose up --build
+```
+
+L'application est disponible sur `http://localhost:8501`. L'image ne contient que le code de l'application, le modèle entraîné (`models/simple_cnn_model.h5`) et les métriques d'évaluation (`results/metrics.json`) — le dossier `data/` (~900 Mo) n'est pas requis à l'exécution et n'est jamais copié dans l'image (voir `.dockerignore`).
+
+### Sans Docker
 
 Prérequis : Python 3.9+.
 
@@ -115,13 +246,13 @@ pip install -r requirements.txt
 
 ## Utilisation
 
-**Lancer l'application :**
+**Lancer l'application** (si vous n'utilisez pas Docker) :
 
 ```bash
 streamlit run app/predict.py
 ```
 
-L'application s'ouvre sur `http://localhost:8501`. Déposez une ou plusieurs radiographies (PNG/JPG) pour obtenir, par image : la classe prédite, le score de confiance par classe, la carte Grad-CAM, puis exportez le rapport (CSV) et les visualisations (ZIP).
+L'application s'ouvre sur `http://localhost:8501`, avec une navigation multi-pages dans la barre latérale (Dashboard, Analyse, Rapports, Historique, Assistant IA, Paramètres, À propos). La page **Nouvelle analyse** est la seule pleinement fonctionnelle aujourd'hui : déposez une ou plusieurs radiographies (PNG/JPG) pour obtenir, par image, la classe prédite, le score de confiance par classe, la carte Grad-CAM et un rapport structuré, puis exportez le tout (CSV, PDF par image, JSON, ZIP des visualisations). Les autres pages affichent explicitement leur état d'avancement (voir [Pistes d'amélioration](#pistes-damélioration)).
 
 **Ré-entraîner ou évaluer le modèle :**
 
@@ -132,7 +263,60 @@ python src/evaluate.py    # évaluation sur le jeu de test
 
 Les notebooks du dossier `notebooks/` retracent, dans l'ordre, l'exploration des données, le prétraitement, l'entraînement et l'évaluation avec Grad-CAM.
 
+## Tests et intégration continue
+
+### Suite rapide (`tests/`, 242 tests, sans TensorFlow)
+
+Couvre `app/image_utils.py` (validation d'image, prétraitement, colorisation et fusion Grad-CAM), `app/report_generator.py` (génération du rapport texte, validité JSON, création du PDF), `app/persistence.py` (sauvegarde, recherche, filtres, suppression, statistiques), `app/translator.py` (traduction, repli sur clé manquante, changement de langue, RTL), `app/components.py` (HTML généré par chaque composant, seuils de couleur, tri), `app/icons.py` (validité SVG de chaque icône), `app/assistant/` (recherche TF-IDF, détection des demandes médicales en fr/en/ar, orchestration RAG avec fournisseur Ollama mocké) et la conformité de contraste WCAG AA de la palette de couleurs (`test_accessibility_contrast.py`). Aucun de ces modules ne dépend de TensorFlow, ce qui garde la suite rapide (< 3 secondes en local).
+
+```bash
+pip install -r requirements-dev.txt
+pytest tests/ -v
+```
+
+### Suite d'intégration complète (`tests_integration/`, 24 tests, nécessite TensorFlow)
+
+Basée sur `streamlit.testing.v1.AppTest`, l'API de test officielle de Streamlit : elle charge réellement `predict.py` (modèle entraîné inclus), simule de vrais uploads d'images, de vrais clics, de vrais changements de langue/thème, et une vraie conversation avec l'assistant — contrairement à une exécution "à blanc" (`python3 predict.py`) ou à un `curl` sur `/`, qui ne récupère que la coquille HTML/JS statique sans jamais exécuter le script côté serveur.
+
+Cette suite a directement trouvé et permis de corriger deux bugs réels qu'aucune autre méthode de test n'avait détectés (voir détail dans l'historique du projet) :
+- **Collision d'URL dans `st.navigation`** : les sept pages exposent chacune une fonction nommée `render`, et Streamlit déduit par défaut le chemin d'URL du nom du callable → collision → l'application plantait à **chaque** chargement. Corrigé en passant un `url_path` explicite à chaque `st.Page()`.
+- **`NameError: name 'json' is not defined`** dans la section export de `app/views/analysis.py` (import manquant), qui ne se déclenchait qu'après un vrai upload suivi d'un rendu de la section export — un chemin de code qu'aucun test précédent n'exerçait réellement.
+
+```bash
+pip install -r requirements.txt pytest
+pytest tests_integration/ -v
+```
+
+**Pourquoi cette suite n'est pas dans la CI rapide.** Elle nécessite TensorFlow et le modèle entraîné (chargement ~10-15 s par test), ce qui va à l'encontre de l'objectif de rapidité de la pipeline par push/PR. Elle doit être exécutée localement avant tout changement touchant `predict.py` ou `app/views/analysis.py`.
+
+**Limite connue de `AppTest`** : `AppTest.switch_page()` ne fonctionne pas avec des pages définies par callable (`st.Page(fonction, url_path=...)`, notre architecture) — il ne vérifie que l'existence du fichier passé en argument, pas la correspondance avec la page réellement enregistrée, et échoue donc silencieusement (aucune exception, mais la page ne change pas). Le mécanisme correct, utilisé dans `tests_integration/test_predict_apptest.py` (fonction `goto_page`), consiste à calculer soi-même `streamlit.util.calc_hash(url_path)` et à l'assigner à l'attribut privé `AppTest._page_hash`.
+
+Le workflow GitHub Actions (`.github/workflows/ci.yml`) exécute à chaque `push` et `pull request` sur `main` :
+
+1. Checkout du dépôt
+2. Installation de Python 3.10
+3. Installation des dépendances légères (`requirements-dev.txt`)
+4. Vérification de la syntaxe de tout le projet, y compris `tests_integration/` (`compileall`)
+5. Vérification que les modules testables s'importent sans erreur
+6. Exécution de la suite rapide `pytest tests/`
+
+## Accessibilité
+
+Un audit de contraste WCAG 2.1 AA a été réalisé — calcul réel des ratios (formule de luminance relative WCAG), pas une estimation visuelle — sur chaque paire texte/fond et icône/fond utilisée dans l'application, en mode clair et sombre. Résultats et corrections :
+
+- **Trouvé en échec** : `--text-muted` (2.56:1 sur fond clair, sous le seuil 4.5:1), les badges succès/avertissement (jusqu'à 1.96:1), le badge info (4.37:1), et plusieurs couleurs de confiance codées en dur et dupliquées dans `analysis.py` (`#FD7E14` à 2.57:1, sous même le seuil graphique 3:1).
+- **Corrigé** : `--text-muted` assombri (`#64748B`, 4.76:1) ; ajout de variantes `--success-text` / `--warning-text` / `--danger-text` / `--accent-text` dédiées au texte et aux icônes (plus foncées que les tons de marque d'origine, qui restent inchangés pour les usages non textuels) ; les 4 endroits qui recalculaient une couleur de confiance en dur dans `analysis.py` ont été remplacés par un seul appel à `components.confidence_color()`, éliminant la duplication en même temps que le bug de contraste.
+- **Testé en permanence** : `tests/test_accessibility_contrast.py` (19 tests) calcule ces ratios à chaque exécution de la suite — toute régression future serait détectée automatiquement, pas seulement lors d'une revue manuelle.
+
+Autres améliorations :
+- **Focus clavier** : anneau de focus visible (`:focus-visible`) sur les boutons, liens, champs et éléments de navigation, actif uniquement à la navigation au clavier (pas au clic souris), conformément à WCAG 2.4.7.
+- **Info-bulles** : ajout de `help=` sur les actions ambiguës ou destructrices (suppression dans l'Historique, export PDF individuel, curseurs Grad-CAM), en plus de celles déjà présentes.
+- **Icônes accompagnées de texte** : aucune icône seule sans libellé adjacent dans l'interface (le bouton clair/sombre, seul cas icône-seule, a un `help=` explicite servant de label accessible).
+
+**Non vérifié** : le rendu réel au lecteur d'écran et la navigation clavier de bout en bout necessitent un navigateur, indisponible dans cet environnement de développement. Les ratios de contraste et la présence des attributs d'accessibilité sont vérifiés programmatiquement ; le comportement réel (ordre de tabulation, annonces de lecteur d'écran) reste à valider manuellement.
+
 ## Limites connues
+
 
 - **Rappel COVID-19 limité (77.5 %)** : dans un cas d'usage réel, ce taux de faux négatifs serait inacceptable sans confirmation par un second examen.
 - **Déséquilibre des classes** dans le jeu de données, non compensé par pondération de classe ou sur-échantillonnage.
@@ -142,10 +326,43 @@ Les notebooks du dossier `notebooks/` retracent, dans l'ordre, l'exploration des
 
 ## Pistes d'amélioration
 
+Le projet évolue vers une application de type SaaS (navigation multi-pages, historique, tableau de bord, assistant IA, internationalisation). Statut réel, phase par phase :
+
+**Fait**
+- ✅ Navigation multi-pages (`st.navigation`) : Dashboard, Analyse, Rapports, Historique, Assistant, Paramètres, À propos, chacune un module indépendant.
+- ✅ Configuration centralisée (`app/config.py` + `.env`), plus aucune valeur codée en dur.
+- ✅ Design system partagé (`app/theme.py`), injecté une seule fois.
+- ✅ Page À propos (contenu réel) et Paramètres (lecture de la configuration réelle).
+- ✅ Persistance des analyses (`app/persistence.py`, SQLite local, testé — 19 tests) : chaque analyse effectuée dans **Nouvelle analyse** est enregistrée (image, prédiction, probabilités, rapport, temps d'inférence), désactivable via `ENABLE_HISTORY`.
+- ✅ Dashboard avec KPI et graphiques réels (répartition par classe, confiance moyenne, temps d'inférence moyen, évolution dans le temps) — calculés depuis la base, jamais inventés ; état vide honnête tant qu'aucune analyse n'existe.
+- ✅ Historique : recherche par nom de fichier, filtre par classe, suppression, ré-export JSON/PDF d'une analyse passée (régénéré depuis les images stockées, sans ré-exécuter le modèle).
+- ✅ Infrastructure i18n (`app/translator.py` + `app/locales/{fr,en,ar}.json`, testée — 19 tests) : sélecteur de langue global dans la barre latérale, langue persistée via l'URL (`?lang=`), repli honnête sur la clé brute si une traduction manque (jamais de texte inventé), support RTL pour l'arabe. **Périmètre actuel : navigation + page À propos + page Paramètres entièrement traduites.** Le reste de l'interface (Analyse, Dashboard, Historique) est encore en français uniquement.
+- ✅ Assistant IA (`app/assistant/`, testé — 53 tests) : RAG hybride entièrement local — garde-fou médical (`safety.py`, s'exécute avant tout appel LLM), recherche TF-IDF sur la documentation du projet (`retriever.py`, 8 documents), génération via **Ollama en local** (`providers/ollama_provider.py`, aucune API payante), architecture modulaire pour ajouter un autre fournisseur sans toucher à l'UI. Langue de réponse alignée sur la langue de l'interface. **Non testé : la génération réelle par Ollama** (aucun serveur Ollama disponible dans l'environnement de développement) — voir la section [Assistant IA](#assistant-ia) pour le détail.
+- ✅ Bibliothèque de composants UI (`app/components.py`, testée — 33 tests) : SectionTitle, MetricCard, StatusBadge, GlassCard, EmptyState, ConfidenceGauge (jauge circulaire SVG), ProbabilityBars, AssistantMessage/UserMessage (bulles de chat), Footer — remplace le HTML dupliqué qui existait dans Dashboard, Historique et Assistant. Couleur d'accent alignée sur `#2563EB` dans tout le CSS (palette success/warning/danger déjà conforme).
+- ✅ Page Rapports (testée — vraies données seedées via `AppTest`) : sélection d'une analyse déjà enregistrée, aperçu JSON interactif (arborescence repliable + bloc copiable avec icône native), aperçu PDF inline (intégré en base64), impression via le navigateur. Réutilise `persistence` et `report_generator` sans dupliquer la logique d'Historique.
+
+**Périmètre non couvert par cette passe de design** (le cahier des charges demandait une refonte visuelle complète en 23 sections ; ce qui suit reste à faire) :
+- Remplacement des icônes restantes (emoji encore présents dans la navigation et plusieurs pages) par une bibliothèque unique.
+- Mode sombre (dark mode).
+- Redesign de la sidebar (collapsible, animations de survol).
+- Application des nouveaux composants aux pages restantes (Analyse, Rapports, À propos, Paramètres) — seuls Dashboard, Historique et Assistant ont été migrés pour l'instant.
+- Écran de chargement animé (pipeline Upload → Validation → Prétraitement → CNN → Grad-CAM → Rapport) sur la page Analyse.
+
+**Pas encore fait** (pages actuellement des gabarits explicites "🚧 pas encore implémenté", pas de fausses données)
+- Traduction complète des pages restantes (Analyse, Dashboard, Historique, Assistant) et des rapports PDF/JSON — aujourd'hui seuls la navigation, À propos et Paramètres sont traduits.
+- Paramètres éditables (actuellement lecture seule).
+- Remplacement des icônes restantes de la page Analyse par le système SVG (Font Awesome retiré partout ailleurs).
+- Historique de conversation de l'assistant non persisté (perdu au rechargement — actuellement en `st.session_state` uniquement).
+- Aperçu PDF inline (page Rapports) : nécessite un lecteur PDF intégré au navigateur, non garanti sur tous les navigateurs mobiles.
+
+**Point d'attention non testé** : dans Docker, le fichier SQLite (`results/history.db`) vit dans le système de fichiers du conteneur, qui est éphémère par défaut. Un volume nommé (`history-data:/app/results`) a été ajouté à `docker-compose.yml` pour le rendre persistant d'un redémarrage à l'autre, mais je n'ai pas pu tester ce comportement avec un vrai Docker dans mon environnement — Docker n'y est pas disponible. À vérifier de votre côté avec `docker compose up --build` suivi d'un redémarrage du conteneur.
+
+**Autres améliorations**
 - Pondération de classe ou ré-échantillonnage pour réduire l'écart de rappel entre classes.
 - Évaluation et comparaison du modèle EfficientNetB0 par rapport au CNN actuel.
 - Validation croisée plutôt qu'un split unique train/val/test.
-- Déplacer `data/` et `models/*.h5` hors du contrôle de version (Git LFS ou stockage cloud) et les exclure via `.gitignore`.
+- Déplacer `data/` et `models/*.h5` hors du contrôle de version (Git LFS ou stockage cloud).
+- Déploiement d'une démo publique (Hugging Face Spaces ou équivalent).
 
 ## Auteur
 

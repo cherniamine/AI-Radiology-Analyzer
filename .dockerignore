@@ -1,0 +1,28 @@
+# Environnement / outils
+.git
+.gitignore
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+.pytest_cache/
+.vscode/
+.idea/
+*.log
+
+# Notebooks : utiles pour le developpement, inutiles a l'execution de l'app
+notebooks/
+
+# Images d'entrainement (~900 Mo) : non necessaires pour servir des predictions,
+# uniquement utilisees par src/train.py et src/evaluate.py en local
+data/
+
+# Un seul des deux modeles est charge par l'application (voir Dockerfile) ;
+# on evite d'envoyer covid_model.h5 (inutilise) dans le contexte de build
+models/*.h5
+!models/simple_cnn_model.h5
+
+# Idem pour results/ : seul metrics.json est lu par l'application au demarrage
+results/*
+!results/metrics.json

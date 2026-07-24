@@ -1,0 +1,70 @@
+name: CI
+
+# Pipeline volontairement simple et rapide :
+#   1. checkout
+#   2. installation de Python
+#   3. installation des dependances (legeres — voir requirements-dev.txt)
+#   4. verification de la syntaxe de tout le projet (compileall)
+#   5. execution des tests unitaires
+#
+# Ce que cette pipeline NE fait PAS, volontairement : charger le modele
+# TensorFlow entraine ou importer app/predict.py directement. predict.py
+# charge le modele des son import (comportement voulu pour l'app
+# Streamlit, qui doit echouer vite si le modele est absent), ce qui en
+# ferait un import lent et lourd a repeter a chaque run de CI. La logique
+# testable (validation d'image, Grad-CAM post-traitement, generation de
+# rapport, persistance de l'historique) a donc ete extraite dans
+# app/image_utils.py, app/report_generator.py et app/persistence.py, trois
+# modules sans dependance a TensorFlow ni a Streamlit, unitairement testes
+# ici en quelques secondes.
+#
+# Tests d'integration complets (tests_integration/) : suite separee, basee
+# sur streamlit.testing.v1.AppTest, qui charge reellement predict.py avec
+# TensorFlow et le modele entraine, simule de vrais uploads d'images, et a
+# deja detecte deux bugs reels qu'aucun test rapide ni verification "curl
+# sur /" n'avait vus (collision d'URL dans st.navigation, import json
+# manquant). Volontairement PAS execute ici (trop lent pour une CI par
+# push/PR) : `pip install -r requirements.txt pytest && pytest
+# tests_integration/ -v` en local avant tout changement touchant
+# predict.py ou app/views/analysis.py. Seule la syntaxe est verifiee ici
+# (compileall), pas l'execution.
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Syntax check + unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout du depot
+        uses: actions/checkout@v4
+
+      - name: Installation de Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Installation des dependances (legeres, sans TensorFlow/Streamlit)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Verification de la syntaxe (compileall)
+        run: |
+          python -m compileall -q app src tests tests_integration
+
+      - name: Verification que les modules testables s'importent correctement
+        run: |
+          python -c "import sys; sys.path.insert(0, 'app'); import image_utils; import report_generator; import persistence; import translator; import components; from assistant import ask; print('OK : image_utils, report_generator, persistence, translator, components et assistant s importent sans erreur')"
+
+      - name: Tests unitaires (pytest)
+        run: |
+          pytest tests/ -v --tb=short
