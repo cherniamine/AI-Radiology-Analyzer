@@ -288,18 +288,11 @@ def render() -> None:
     # SIDEBAR AVEC ICÔNES FONT AWESOME
     # ==============================================================
     with st.sidebar:
-        st.markdown("""
-        <div class="sidebar-header">
-            <h3><span style="margin-right: 8px; display:inline-flex; vertical-align:middle;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/></svg></span> AI Radiology</h3>
-            <p>Suite d'assistance diagnostique</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
         st.markdown("""#### <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><path d="M12 2H2v10l9.3 9.3a1 1 0 0 0 1.4 0l8.6-8.6a1 1 0 0 0 0-1.4L12 2Z"/><circle cx="7" cy="7" r="1"/></svg> Classes détectées""", unsafe_allow_html=True)
         for cname in CLASS_NAMES:
             color, soft, label, icon = class_color(cname)
             st.markdown(f"""
-            <div class="legend-item">
+            <div class="legend-item" style="--legend-color:{color};">
                 <div class="legend-dot" style="background-color:{color};"></div>
                 <span class="legend-text">{render_icon(icon, size=14)} {label}</span>
                 <span class="legend-sub">{CLASS_META[cname]['description']}</span>
@@ -699,22 +692,18 @@ def render() -> None:
                 key=f"alpha_{idx}", label_visibility="collapsed",
                 help="Ajuste l'opacité de la fusion Grad-CAM pour cette image uniquement",
             )
-            heatmap_only = colorize_heatmap(row["Original"].shape, row["Heatmap"], colormap)
             live_overlay = overlay_heatmap_cv(row["Original"], row["Heatmap"], alpha=card_alpha, colormap=colormap)
 
             # Vérification que les images sont bien en RGB uint8
             if live_overlay.dtype != np.uint8:
                 live_overlay = (live_overlay * 255).astype(np.uint8) if live_overlay.max() <= 1.0 else live_overlay.astype(np.uint8)
-            if heatmap_only.dtype != np.uint8:
-                heatmap_only = (heatmap_only * 255).astype(np.uint8) if heatmap_only.max() <= 1.0 else heatmap_only.astype(np.uint8)
 
-            img_col1, img_col2, img_col3 = st.columns(3)
+            # Affichage de 2 colonnes : Original et Grad-CAM (fusion renommée)
+            img_col1, img_col2 = st.columns(2)
             with img_col1:
                 st.image(row["Original"], width='stretch', caption="🖼️ Original", output_format="auto")
             with img_col2:
-                st.image(heatmap_only, width='stretch', caption="🔥 Grad-CAM", output_format="auto")
-            with img_col3:
-                st.image(live_overlay, width='stretch', caption="🧬 Fusion", output_format="auto")
+                st.image(live_overlay, width='stretch', caption="🧬 Grad-CAM", output_format="auto")
 
             # Jauge de confiance + barres de probabilite par classe
             row_probabilities = {name: row.get(f"Prob_{name}", 0.0) for name in CLASS_NAMES}
@@ -748,27 +737,73 @@ def render() -> None:
             </div>
             """, unsafe_allow_html=True)
 
-            # PNG Downloads - Boutons améliorés
+            # PNG Downloads - Boutons améliorés avec espacement contrôlé
             safe_name = os.path.splitext(row["Image"])[0].replace(" ", "_").replace("-", "_")
-            png_col1, png_col2, png_col3 = st.columns(3)
-            for col, img, suffix, dl_label in [
-                (png_col1, row["Original"], "original", "Original"),
-                (png_col2, heatmap_only, "heatmap", "Heatmap"),
-                (png_col3, live_overlay, "overlay", "Fusion"),
-            ]:
-                with col:
-                    ok, buf = cv2.imencode(".png", cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-                    if ok:
-                        # Bouton avec style personnalisé via HTML
-                        st.markdown(f"""
-                        <div style="display: flex; justify-content: center;">
-                            <a href="data:image/png;base64,{base64.b64encode(buf).decode()}" download="{safe_name}_{suffix}.png" style="text-decoration: none;">
-                                <button style="background: var(--accent-gradient); color: white; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(79,70,229,0.2); transition: all 0.2s;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg> {dl_label}
-                                </button>
-                            </a>
-                        </div>
-                        """, unsafe_allow_html=True)
+            
+            # Conteneur pour les boutons de téléchargement avec espacement contrôlé
+            st.markdown("""
+            <style>
+            .download-buttons-container {
+                display: flex;
+                gap: 16px;
+                justify-content: center;
+                margin: 8px 0;
+                flex-wrap: wrap;
+            }
+            .download-btn {
+                background: var(--accent-gradient);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 10px 20px;
+                font-weight: 600;
+                font-size: 13px;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                box-shadow: 0 2px 8px rgba(79,70,229,0.2);
+                transition: all 0.2s;
+                text-decoration: none;
+                white-space: nowrap;
+            }
+            .download-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+            }
+            </style>
+            """, unsafe_allow_html=True)
+            
+            png_col1, png_col2 = st.columns(2)
+            
+            # Bouton Original
+            with png_col1:
+                ok, buf = cv2.imencode(".png", cv2.cvtColor(row["Original"], cv2.COLOR_RGB2BGR))
+                if ok:
+                    st.markdown(f"""
+                    <div style="display: flex; justify-content: center;">
+                        <a href="data:image/png;base64,{base64.b64encode(buf).decode()}" download="{safe_name}_original.png" style="text-decoration: none;">
+                            <button class="download-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg> Original
+                            </button>
+                        </a>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            # Bouton Grad-CAM
+            with png_col2:
+                ok, buf = cv2.imencode(".png", cv2.cvtColor(live_overlay, cv2.COLOR_RGB2BGR))
+                if ok:
+                    st.markdown(f"""
+                    <div style="display: flex; justify-content: center;">
+                        <a href="data:image/png;base64,{base64.b64encode(buf).decode()}" download="{safe_name}_gradcam.png" style="text-decoration: none;">
+                            <button class="download-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg> Grad-CAM
+                            </button>
+                        </a>
+                    </div>
+                    <br>
+                    """, unsafe_allow_html=True)
 
             # Report
             with st.expander("📄 Rapport IA détaillé"):
@@ -790,15 +825,16 @@ def render() -> None:
                         <div style="font-size:14px; color:var(--text-primary); margin-top:4px;">{report_dict.get('recommendation', 'N/A')}</div>
                     </div>
                 </div>
+                <br>
                 """, unsafe_allow_html=True)
 
-                pdf_bytes = generate_pdf_report(report, row["Original"], live_overlay, heatmap_only)
+                pdf_bytes = generate_pdf_report(report, row["Original"], live_overlay, live_overlay)
                 st.download_button(
                     label="📄 Télécharger le rapport (PDF)",
                     data=pdf_bytes,
                     file_name=f"rapport_{safe_name}.pdf",
                     mime="application/pdf",
-                    help="Rapport complet pour cette image : original, Grad-CAM, fusion et observations",
+                    help="Rapport complet pour cette image : original, Grad-CAM et observations",
                     key=f"pdf_dl_{idx}",
                     width='stretch',
                 )
@@ -847,7 +883,20 @@ def render() -> None:
                 width='stretch',
             )
 
-        st.success(f"✅ Analyse terminée : {len(results)} radiographie(s) traitée(s).")
+        # Message de succès avec icône professionnelle (remplace ✅)
+        st.markdown(f"""
+        <div class="card" style="border-left: 4px solid var(--success-text); margin-top: 24px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--success-text);"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                <div>
+                    <strong style="color: var(--success-text);">Analyse terminée</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-secondary);">
+                        {len(results)} radiographie(s) traitée(s) avec succès
+                    </p>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     else:
         # ==============================================================
@@ -924,4 +973,3 @@ def render() -> None:
                     <p style="font-size:13px; margin:0; color:var(--text-secondary);">{desc}</p>
                 </div>
                 """, unsafe_allow_html=True)
-

@@ -61,24 +61,24 @@ def ratio(fg_hex, bg_hex):
 WHITE = (255, 255, 255)
 
 LIGHT_TEXT_ON_CARD = [
-    ("text-primary", "#0F172A"),
-    ("text-secondary", "#475569"),
-    ("text-muted", "#64748B"),
+    ("text-primary", "#241C10"),
+    ("text-secondary", "#5E5240"),
+    ("text-muted", "#726550"),
 ]
 
 LIGHT_BADGE_TEXT = [
     # (nom, couleur_texte, couleur_base_du_badge, alpha_du_fond)
-    ("badge-success", "#047857", (16, 185, 129), 0.12),
-    ("badge-warning", "#92400E", (245, 158, 11), 0.12),
-    ("badge-danger", "#B91C1C", (239, 68, 68), 0.12),
-    ("badge-info", "#1D4ED8", (37, 99, 235), 0.12),
+    ("badge-success", "#0B6942", (63, 178, 127), 0.12),
+    ("badge-warning", "#7A4E00", (232, 185, 62), 0.12),
+    ("badge-danger", "#9E2226", (229, 72, 77), 0.12),
+    ("badge-info", "#9C5000", (194, 121, 12), 0.12),
 ]
 
 LIGHT_ICON_ON_CARD = [
-    ("icone succes (pipeline)", "#047857"),
-    ("icone avertissement", "#92400E"),
-    ("icone danger", "#B91C1C"),
-    ("icone accent (section_title)", "#2563EB"),
+    ("icone succes (pipeline)", "#0B6942"),
+    ("icone avertissement", "#7A4E00"),
+    ("icone danger", "#9E2226"),
+    ("icone accent (section_title)", "#9C5000"),
 ]
 
 
@@ -103,19 +103,19 @@ class TestLightModeContrast:
 # ==============================================================
 # MODE SOMBRE
 # ==============================================================
-DARK_CARD = hex_to_rgb("#161F36")
+DARK_CARD = hex_to_rgb("#17130D")
 
 DARK_TEXT_ON_CARD = [
-    ("text-primary (dark)", "#F1F5F9"),
-    ("text-secondary (dark)", "#CBD5E1"),
-    ("text-muted (dark)", "#7C89A6"),
+    ("text-primary (dark)", "#F5EDE1"),
+    ("text-secondary (dark)", "#C9BCA6"),
+    ("text-muted (dark)", "#8F8370"),
 ]
 
 DARK_BADGE_TEXT = [
-    ("badge-success (dark)", "#34D399", (16, 185, 129), 0.12),
-    ("badge-warning (dark)", "#FCD34D", (245, 158, 11), 0.12),
-    ("badge-danger (dark)", "#F87171", (239, 68, 68), 0.12),
-    ("badge-info (dark)", "#93C5FD", (37, 99, 235), 0.12),
+    ("badge-success (dark)", "#5FD39B", (63, 178, 127), 0.12),
+    ("badge-warning (dark)", "#F5CE6E", (232, 185, 62), 0.12),
+    ("badge-danger (dark)", "#FF8A8E", (229, 72, 77), 0.12),
+    ("badge-info (dark)", "#FFB854", (194, 121, 12), 0.12),
 ]
 
 
