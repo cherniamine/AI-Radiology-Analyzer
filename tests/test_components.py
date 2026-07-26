@@ -159,10 +159,8 @@ class TestChatBubbles:
 
     def test_assistant_message_includes_sources_when_given(self):
         html = _build_assistant_message_html("Réponse", sources=["faq.md", "overview.md"])
-        # Les noms de fichiers sont transformés : faq.md -> Faq, overview.md -> Overview
         assert "Faq" in html
         assert "Overview" in html
-        # Vérifier que le séparateur "Sources :" est présent
         assert "Sources :" in html
 
     def test_assistant_message_omits_sources_block_when_none(self):
