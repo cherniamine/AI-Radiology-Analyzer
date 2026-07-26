@@ -22,6 +22,7 @@ def render() -> None:
     <div class="disclaimer" style="margin-top:0;">
         {render_icon("alert-triangle", size=15)} {t('about.disclaimer')}
     </div>
+    <br>
     """, unsafe_allow_html=True)
 
     metrics = load_real_metrics()
@@ -60,7 +61,7 @@ def render() -> None:
     """)
 
     tech_badges = "".join(
-        f'<span class="badge badge-info">{name}</span>'
+        f'<span class="badge badge-info">{render_icon("cpu", size=10)} {name}</span>'
         for name in ["TensorFlow / Keras", "Streamlit", "OpenCV", "Plotly", "ReportLab",
                      "SQLite", "Ollama", "Docker", "GitHub Actions"]
     )
@@ -69,18 +70,60 @@ def render() -> None:
     <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">{tech_badges}</div>
     """)
 
-    limitations_html = "".join(f"<li>{item}</li>" for item in t("about.limitations"))
+    limitations_html = "".join(f"<li>{render_icon('x-circle', size=12)} {item}</li>" for item in t("about.limitations"))
     glass_card(f"""
     <h3>{render_icon('alert-triangle', size=18)} {t('about.limitations_title')}</h3>
-    <ul style="font-size:13.5px; line-height:1.8; padding-left:20px;">{limitations_html}</ul>
+    <ul style="font-size:13.5px; line-height:1.8; padding-left:20px; list-style:none;">{limitations_html}</ul>
     """)
 
+    # Roadmap avec icônes ✅ et 🚧 remplacées - Version avec deux colonnes
     glass_card(f"""
     <h3>{render_icon('sparkles', size=18)} {t('about.roadmap_title')}</h3>
-    <p style="font-size:13.5px; line-height:1.8;">
-    {t('about.roadmap_done')}<br>
-    {t('about.roadmap_pending')}
-    </p>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:13.5px; line-height:2;">
+        <div>
+            <div style="font-weight:600; color:var(--success-text); margin-bottom:8px;">
+                {render_icon('check-circle', size=14, color='var(--success-text)')} Terminé
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">
+                {render_icon('check-circle', size=14, color='var(--success-text)')} <span>Architecture documentée</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">
+                {render_icon('check-circle', size=14, color='var(--success-text)')} <span>Validation des entrées</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">
+                {render_icon('check-circle', size=14, color='var(--success-text)')} <span>Rapport IA (PDF/JSON)</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">
+                {render_icon('check-circle', size=14, color='var(--success-text)')} <span>Grad-CAM comparatif</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">
+                {render_icon('check-circle', size=14, color='var(--success-text)')} <span>Docker</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">
+                {render_icon('check-circle', size=14, color='var(--success-text)')} <span>CI/CD</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">
+                {render_icon('check-circle', size=14, color='var(--success-text)')} <span>Navigation multi-pages</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">
+                {render_icon('check-circle', size=14, color='var(--success-text)')} <span>Persistance (Historique, Dashboard)</span>
+            </div>
+        </div>
+        <div>
+            <div style="font-weight:600; color:var(--warning-text); margin-bottom:8px;">
+                {render_icon('alert-triangle', size=14, color='var(--warning-text)')} En cours
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; color:var(--warning-text);">
+                {render_icon('alert-triangle', size=14, color='var(--warning-text)')} <span>Internationalisation complète (en/fr/ar)</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; color:var(--warning-text);">
+                {render_icon('alert-triangle', size=14, color='var(--warning-text)')} <span>Assistant IA (RAG + Ollama)</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; color:var(--warning-text);">
+                {render_icon('alert-triangle', size=14, color='var(--warning-text)')} <span>Paramètres éditables</span>
+            </div>
+        </div>
+    </div>
     """)
 
     footer(

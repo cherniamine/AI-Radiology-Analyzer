@@ -16,13 +16,14 @@ Toutes les couleurs viennent des variables CSS definies dans theme.py
 (var(--success), var(--accent-primary), etc.) plutot que d'etre codees en
 dur, pour rester coherentes si la palette change.
 """
-
+ 
 from __future__ import annotations
+
 
 from typing import Dict, List, Optional
 
 import streamlit as st
-
+import os  
 from icons import icon as render_icon
 
 # ==============================================================
@@ -164,10 +165,11 @@ def _build_probability_bars_html(class_probabilities: Dict[str, float], color_fn
     rows = []
     for name, prob in sorted(class_probabilities.items(), key=lambda kv: -kv[1]):
         color, _soft, label, icon_name = color_fn(name)
+        icon_svg = render_icon(icon_name, size=14, color=color)
         rows.append(f"""
         <div style="margin-bottom:10px;">
             <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
-                <span style="color:var(--text-secondary);">{render_icon(icon_name, size=14, color=color)} {label}</span>
+                <span style="color:var(--text-secondary);display:flex;align-items:center;gap:6px;">{icon_svg} {label}</span>
                 <span style="font-weight:600; color:{color};">{prob:.1f}%</span>
             </div>
             <div style="height:8px; background:var(--bg-input); border-radius:6px; overflow:hidden;">
@@ -186,33 +188,82 @@ def probability_bars(class_probabilities: Dict[str, float], color_fn) -> None:
 # ==============================================================
 # Chat bubbles — AssistantMessage / UserMessage (page Assistant IA)
 # ==============================================================
+#
+# IMPORTANT (bug corrige) : ces deux fonctions renvoient volontairement du
+# HTML SANS retour a la ligne ni indentation dans le balisage que NOUS
+# ecrivons (seul `text`/`source_items`, fournis par l'appelant, peuvent
+# contenir des retours a la ligne). Raison : le moteur Markdown de
+# Streamlit (st.markdown) traite toute ligne indentee de 4 espaces ou plus
+# et precedee d'une ligne vide comme un BLOC DE CODE indente (regle
+# CommonMark), pas comme du HTML a injecter. `text` est la reponse
+# generee par le LLM et contient souvent des sauts de paragraphe (lignes
+# vides) ; des lors qu'un tel saut de paragraphe apparaissait dans `text`
+# AVANT le bloc `sources_html` (qui, lui, etait indente de 8 espaces dans
+# le code source), le parseur sortait du mode "bloc HTML brut" et
+# affichait tout le reste litteralement — c'est le bug observe en
+# production (voir capture d'ecran : la balise `<div class="sidebar-header">`
+# et les balises suivantes s'affichaient telles quelles au lieu d'etre
+# rendues). Ecrire le balisage sur une seule ligne rend le bug impossible
+# a reproduire, quel que soit le contenu de `text`.
 def _build_user_message_html(text: str) -> str:
-    return f"""
-    <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
-        <div style="max-width:80%; background:var(--accent-gradient); color:#FFFFFF;
-                    padding:10px 16px; border-radius:16px 16px 4px 16px; font-size:14px; line-height:1.5;">
-            {text}
-        </div>
-    </div>
-    """
+    return (
+        '<div style="display:flex; justify-content:flex-end; margin-bottom:10px;">'
+        '<div style="max-width:80%; background:var(--accent-gradient); color:#FFFFFF; '
+        'padding:10px 16px; border-radius:16px 16px 4px 16px; font-size:14px; line-height:1.5;">'
+        f'{text}'
+        '</div>'
+        '</div>'
+    )
 
 
 def _build_assistant_message_html(text: str, sources: Optional[List[str]] = None) -> str:
+    """Construit le HTML pour un message de l'assistant avec ses sources."""
     sources_html = ""
     if sources:
-        sources_html = (
-            '<div style="margin-top:6px; font-size:11px; color:var(--text-muted);">'
-            f'Sources : {", ".join(sources)}</div>'
+        # Nettoyer et formater les noms de sources
+        clean_sources = []
+        for s in sources:
+            # Si c'est un chemin de fichier, ne garder que le nom du fichier
+            if isinstance(s, str):
+                # Enlever le chemin complet
+                clean_name = os.path.basename(s)
+                # Enlever l'extension
+                clean_name = os.path.splitext(clean_name)[0]
+                # Remplacer les underscores par des espaces
+                clean_name = clean_name.replace("_", " ").replace("-", " ")
+                # Mettre en titre (première lettre majuscule)
+                clean_name = clean_name.title()
+                clean_sources.append(clean_name)
+            else:
+                clean_sources.append(str(s))
+
+        # Éviter les doublons
+        clean_sources = list(dict.fromkeys(clean_sources))
+
+        # Limiter à 5 sources maximum pour ne pas surcharger
+        if len(clean_sources) > 5:
+            clean_sources = clean_sources[:5]
+            clean_sources.append("...")
+
+        source_items = "".join(
+            f'<span class="badge badge-info" style="font-size:10px; margin:2px 4px 2px 0; display:inline-block; background:var(--bg-input); color:var(--text-secondary); border:1px solid var(--border-color); padding:2px 8px; border-radius:12px;">{render_icon("file-text", size=10)} {s}</span>'
+            for s in clean_sources
         )
-    return f"""
-    <div style="display:flex; justify-content:flex-start; margin-bottom:10px;">
-        <div style="max-width:80%; background:var(--bg-input); color:var(--text-primary);
-                    padding:10px 16px; border-radius:16px 16px 16px 4px; font-size:14px; line-height:1.5;">
-            {text}
-            {sources_html}
-        </div>
-    </div>
-    """
+        sources_html = (
+            '<div style="margin-top:8px; padding-top:6px; border-top:1px solid var(--border-color);">'
+            f'<span style="font-size:11px; color:var(--text-muted);">{render_icon("paperclip", size=12)} Sources :</span>'
+            f'<div style="margin-top:4px; display:flex; flex-wrap:wrap; gap:4px;">{source_items}</div>'
+            '</div>'
+        )
+    return (
+        '<div style="display:flex; justify-content:flex-start; margin-bottom:10px;">'
+        '<div style="max-width:80%; background:var(--bg-input); color:var(--text-primary); '
+        'padding:10px 16px; border-radius:16px 16px 16px 4px; font-size:14px; line-height:1.5;">'
+        f'{text}{sources_html}'
+        '</div>'
+        '</div>'
+    )
+
 
 
 def user_message(text: str) -> None:
@@ -221,8 +272,6 @@ def user_message(text: str) -> None:
 
 def assistant_message(text: str, sources: Optional[List[str]] = None) -> None:
     st.markdown(_build_assistant_message_html(text, sources), unsafe_allow_html=True)
-
-
 # ==============================================================
 # Footer
 # ==============================================================

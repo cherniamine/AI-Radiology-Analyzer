@@ -47,7 +47,16 @@ CREATE TABLE IF NOT EXISTS analyses (
     recommendation TEXT NOT NULL DEFAULT '',
     inference_ms REAL NOT NULL DEFAULT 0,
     original_png BLOB,
-    overlay_png BLOB
+    overlay_png BLOB,
+    heatmap_png BLOB
+);
+
+CREATE TABLE IF NOT EXISTS assistant_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
+    content TEXT NOT NULL,
+    sources TEXT  -- ✅ Ajout : stockage JSON des sources
 );
 """
 
@@ -87,6 +96,7 @@ class AnalysisRecord:
     inference_ms: float
     _original_png: Optional[bytes] = None
     _overlay_png: Optional[bytes] = None
+    _heatmap_png: Optional[bytes] = None
 
     def original_image(self) -> Optional[np.ndarray]:
         return _decode_png(self._original_png)
@@ -94,8 +104,16 @@ class AnalysisRecord:
     def overlay_image(self) -> Optional[np.ndarray]:
         return _decode_png(self._overlay_png)
 
+    def heatmap_image(self) -> Optional[np.ndarray]:
+        """Carte Grad-CAM pure (sans fusion avec l'image originale). Absente pour les
+        analyses enregistrees avant l'ajout de cette colonne (migration sans retro-remplissage)."""
+        return _decode_png(self._heatmap_png)
+
     def has_images(self) -> bool:
         return bool(self._original_png and self._overlay_png)
+
+    def has_heatmap(self) -> bool:
+        return bool(self._heatmap_png)
 
     def to_dict(self) -> dict:
         """Vue serialisable (sans les images) — utilisee pour l'export JSON depuis l'historique."""
@@ -127,6 +145,7 @@ def _row_to_record(row: sqlite3.Row) -> AnalysisRecord:
         inference_ms=row["inference_ms"],
         _original_png=row["original_png"],
         _overlay_png=row["overlay_png"],
+        _heatmap_png=row["heatmap_png"],
     )
 
 
@@ -139,7 +158,19 @@ class HistoryStore:
         if parent:
             os.makedirs(parent, exist_ok=True)
         with self._connect() as conn:
-            conn.execute(SCHEMA)
+            conn.executescript(SCHEMA)
+            # Migrations : ajouter les colonnes qui n'existaient pas dans les
+            # versions anterieures du schema, sans casser les bases deja
+            # deployees (ALTER TABLE ... ADD COLUMN est idempotent ici via
+            # le try/except, plutot qu'une verification de version formelle).
+            try:
+                conn.execute("ALTER TABLE assistant_messages ADD COLUMN sources TEXT")
+            except sqlite3.OperationalError:
+                pass  # La colonne existe déjà
+            try:
+                conn.execute("ALTER TABLE analyses ADD COLUMN heatmap_png BLOB")
+            except sqlite3.OperationalError:
+                pass  # La colonne existe déjà
 
     @contextmanager
     def _connect(self):
@@ -164,14 +195,21 @@ class HistoryStore:
         inference_ms: float = 0.0,
         original_image: Optional[np.ndarray] = None,
         overlay_image: Optional[np.ndarray] = None,
+        heatmap_image: Optional[np.ndarray] = None,
     ) -> int:
-        """Enregistre une analyse. Retourne l'id genere."""
+        """Enregistre une analyse. Retourne l'id genere.
+
+        heatmap_image : carte Grad-CAM pure (avant fusion avec l'image
+        originale) — distincte de overlay_image. Optionnelle : les pages
+        Historique/Rapports retombent sur une mise en page PDF a 2 images
+        (original + overlay) si elle est absente."""
         with self._connect() as conn:
             cur = conn.execute(
                 """INSERT INTO analyses
                    (created_at, image_name, predicted_class, confidence, class_probabilities,
-                    findings, impression, recommendation, inference_ms, original_png, overlay_png)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    findings, impression, recommendation, inference_ms, original_png, overlay_png,
+                    heatmap_png)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     datetime.now(timezone.utc).isoformat(),
                     image_name,
@@ -184,6 +222,7 @@ class HistoryStore:
                     float(inference_ms),
                     _encode_png(original_image),
                     _encode_png(overlay_image),
+                    _encode_png(heatmap_image),
                 ),
             )
             return cur.lastrowid
@@ -225,6 +264,51 @@ class HistoryStore:
     def count(self) -> int:
         with self._connect() as conn:
             return conn.execute("SELECT COUNT(*) AS c FROM analyses").fetchone()["c"]
+
+    # === Conversation de l'assistant IA ===
+
+    def add_assistant_message(self, role: str, content: str, sources: Optional[list] = None) -> int:
+        """
+        Ajoute un message a la conversation persistee.
+        role doit etre 'user' ou 'assistant'.
+        sources : liste de noms de fichiers sources (optionnel)
+        """
+        sources_json = json.dumps(sources) if sources else None
+        with self._connect() as conn:
+            cur = conn.execute(
+                "INSERT INTO assistant_messages (created_at, role, content, sources) VALUES (?, ?, ?, ?)",
+                (datetime.now(timezone.utc).isoformat(), role, content, sources_json),
+            )
+            return cur.lastrowid
+
+    def get_assistant_conversation(self) -> list[dict]:
+        """
+        Retourne la conversation complete, dans l'ordre chronologique.
+        Chaque message contient 'role', 'content' et optionnellement 'sources'.
+        """
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT role, content, sources FROM assistant_messages ORDER BY id ASC"
+            ).fetchall()
+        
+        conversation = []
+        for row in rows:
+            message = {"role": row["role"], "content": row["content"]}
+            if row["sources"]:
+                try:
+                    message["sources"] = json.loads(row["sources"])
+                except json.JSONDecodeError:
+                    pass
+            conversation.append(message)
+        return conversation
+
+    def clear_assistant_conversation(self) -> None:
+        with self._connect() as conn:
+            conn.execute("DELETE FROM assistant_messages")
+
+    def count_assistant_messages(self) -> int:
+        with self._connect() as conn:
+            return conn.execute("SELECT COUNT(*) AS c FROM assistant_messages").fetchone()["c"]
 
     def stats(self) -> dict:
         """

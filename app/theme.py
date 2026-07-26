@@ -107,6 +107,24 @@ def inject_theme(rtl: bool = False, dark: bool = False) -> None:
         color: var(--text-secondary);
     }
 
+    /* CORRECTION POUR LES ICÔNES SVG : s'assurer qu'elles s'affichent */
+    svg {
+        display: inline-block !important;
+        vertical-align: middle !important;
+        width: auto;
+        height: auto;
+        flex-shrink: 0;
+    }
+    
+    /* Forcer les icônes à hériter de la couleur du texte parent */
+    svg[stroke="currentColor"] {
+        stroke: currentColor !important;
+    }
+    
+    svg[fill="none"] {
+        fill: none !important;
+    }
+
     /* Chiffres et donnees numeriques : police mono partout ou une valeur
        mesuree (confiance, probabilite, metrique) est affichee — registre
        "instrument de mesure clinique" plutot que texte courant. */
@@ -125,8 +143,6 @@ def inject_theme(rtl: bool = False, dark: bool = False) -> None:
         overflow: hidden;
     }
 
-    /* Lueur du negatoscope : halo ambre diffus dans un coin, discret en
-       mode clair, plus marque en mode sombre (voir bloc `dark` plus bas). */
     .main-header::before {
         content: "";
         position: absolute;
@@ -146,6 +162,12 @@ def inject_theme(rtl: bool = False, dark: bool = False) -> None:
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin-bottom: 4px;
+    }
+    
+    /* Correction pour les icônes dans le header */
+    .main-header h1 svg {
+        color: var(--accent-primary);
+        stroke: var(--accent-primary);
     }
 
     .main-header .subtitle {
@@ -193,6 +215,14 @@ def inject_theme(rtl: bool = False, dark: bool = False) -> None:
         letter-spacing: 0.1em;
         color: var(--text-muted);
         margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .readout-label svg {
+        color: var(--text-muted);
+        stroke: var(--text-muted);
     }
 
     .readout-value {
@@ -253,6 +283,13 @@ def inject_theme(rtl: bool = False, dark: bool = False) -> None:
         display: inline-flex !important;
         align-items: center !important;
         gap: 8px !important;
+    }
+    
+    /* Correction pour les icônes dans les boutons */
+    .stButton button svg, .stDownloadButton button svg {
+        color: var(--on-accent);
+        stroke: var(--on-accent);
+        flex-shrink: 0;
     }
 
     .stButton button:hover, .stDownloadButton button:hover {
@@ -318,6 +355,16 @@ def inject_theme(rtl: bool = False, dark: bool = False) -> None:
         background: none !important;
         -webkit-text-fill-color: var(--text-muted) !important;
         margin: 22px 0 10px 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+    
+    section[data-testid="stSidebar"] h3 svg,
+    section[data-testid="stSidebar"] h4 svg {
+        color: var(--text-muted);
+        stroke: var(--text-muted);
+        flex-shrink: 0;
     }
 
     /* Separateurs (st.markdown("---")) affines en degrade, plutot qu'un
@@ -455,6 +502,11 @@ def inject_theme(rtl: bool = False, dark: bool = False) -> None:
         align-items: center !important;
         justify-content: center !important;
     }
+    
+    section[data-testid="stSidebar"] [data-testid="stColumn"]:nth-of-type(2) .stButton button svg {
+        color: var(--text-secondary);
+        stroke: var(--text-secondary);
+    }
 
     section[data-testid="stSidebar"] [data-testid="stColumn"]:nth-of-type(2) .stButton button:hover {
         border-color: var(--accent-primary) !important;
@@ -493,6 +545,11 @@ def inject_theme(rtl: bool = False, dark: bool = False) -> None:
         font-weight: 500;
         color: var(--text-primary);
     }
+    
+    .legend-text svg {
+        color: var(--text-primary);
+        stroke: var(--text-primary);
+    }
 
     .legend-sub {
         font-size: 11px;
@@ -520,6 +577,14 @@ def inject_theme(rtl: bool = False, dark: bool = False) -> None:
         font-weight: 700;
         color: var(--text-primary);
         font-feature-settings: "tnum";
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .metric-value svg {
+        flex-shrink: 0;
     }
 
     .metric-label {
@@ -529,6 +594,16 @@ def inject_theme(rtl: bool = False, dark: bool = False) -> None:
         letter-spacing: 0.08em;
         color: var(--text-muted);
         margin-top: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+    
+    .metric-label svg {
+        color: var(--text-muted);
+        stroke: var(--text-muted);
+        flex-shrink: 0;
     }
 
     .badge {
@@ -540,25 +615,49 @@ def inject_theme(rtl: bool = False, dark: bool = False) -> None:
         font-size: 12px;
         font-weight: 600;
     }
+    
+    .badge svg {
+        flex-shrink: 0;
+    }
 
     .badge-success {
         background: rgba(63, 178, 127, 0.12);
         color: var(--success-text);
+    }
+    
+    .badge-success svg {
+        color: var(--success-text);
+        stroke: var(--success-text);
     }
 
     .badge-warning {
         background: rgba(232, 185, 62, 0.12);
         color: var(--warning-text);
     }
+    
+    .badge-warning svg {
+        color: var(--warning-text);
+        stroke: var(--warning-text);
+    }
 
     .badge-danger {
         background: rgba(229, 72, 77, 0.12);
         color: var(--danger-text);
     }
+    
+    .badge-danger svg {
+        color: var(--danger-text);
+        stroke: var(--danger-text);
+    }
 
     .badge-info {
         background: rgba(194, 121, 12, 0.12);
         color: var(--accent-text);
+    }
+    
+    .badge-info svg {
+        color: var(--accent-text);
+        stroke: var(--accent-text);
     }
 
     .stProgress > div > div > div > div {
@@ -589,6 +688,16 @@ def inject_theme(rtl: bool = False, dark: bool = False) -> None:
         font-size: 12px;
         color: var(--warning-text);
         margin-top: 16px;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .disclaimer svg {
+        color: var(--warning-text);
+        stroke: var(--warning-text);
+        flex-shrink: 0;
+        margin-top: 2px;
     }
 
     .footer {
@@ -646,7 +755,7 @@ def inject_theme(rtl: bool = False, dark: bool = False) -> None:
 
     .card, .metric-card, .main-header, .readout-strip {
         max-width: 100%;
-        overflow-x: auto;
+        
     }
 
     /* Etats de focus clavier (accessibilite). :focus-visible ne s'affiche
@@ -801,6 +910,11 @@ def inject_theme(rtl: bool = False, dark: bool = False) -> None:
         [data-baseweb="input"], [data-baseweb="textarea"], [data-baseweb="select"] > div {
             background-color: var(--bg-input) !important;
             color: var(--text-primary) !important;
+        }
+        
+        /* Correction pour les icônes en mode sombre */
+        svg[stroke="currentColor"] {
+            stroke: currentColor !important;
         }
         </style>
         """, unsafe_allow_html=True)

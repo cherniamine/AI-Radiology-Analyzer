@@ -16,7 +16,7 @@ avec un Ollama reellement lance.
 
 import os
 import sys
-
+from typing import Optional
 import streamlit as st
 
 _ASSISTANT_PARENT = os.path.dirname(os.path.abspath(__file__))
@@ -53,8 +53,27 @@ def render() -> None:
 
     language = get_language()
 
+    # Persistance : rattachee au meme interrupteur que l'historique des
+    # analyses (ENABLE_HISTORY) — coherent avec le reste de l'app, qui n'a
+    # qu'une seule notion de "conserver des donnees en local ou non". Si
+    # desactive, on retombe sur l'ancien comportement (session_state
+    # seulement, perdu au rechargement de page).
+    persist_chat = config.enable_history
+    if persist_chat:
+        from persistence import get_store
+        store = get_store()
+
     if "assistant_history" not in st.session_state:
-        st.session_state.assistant_history = []
+        st.session_state.assistant_history = store.get_assistant_conversation() if persist_chat else []
+
+    def _append(role: str, content: str, sources: Optional[list] = None) -> None:
+        """Ajoute un message à l'historique avec ses sources."""
+        message = {"role": role, "content": content}
+        if sources:
+            message["sources"] = sources
+        st.session_state.assistant_history.append(message)
+        if persist_chat:
+            store.add_assistant_message(role, content, sources=sources)
 
     # Etat du serveur Ollama, verifie une fois par session (pas a chaque rerun)
     if "ollama_reachable" not in st.session_state:
@@ -81,28 +100,39 @@ def render() -> None:
         for col, question in zip(cols, suggestions):
             with col:
                 if st.button(question, key=f"suggest_{question}", width='stretch'):
-                    st.session_state.assistant_history.append({"role": "user", "content": question})
+                    _append("user", question)
                     st.rerun()
 
+    # ✅ Affichage de l'historique avec sources persistantes
     for message in st.session_state.assistant_history:
         if message["role"] == "user":
             user_message(message["content"])
         else:
-            assistant_message(message["content"])
+            # On récupère les sources si elles existent
+            sources = message.get("sources")
+            assistant_message(message["content"], sources=sources)
 
     # Si le dernier message est de l'utilisateur sans reponse, la generer maintenant
     if st.session_state.assistant_history and st.session_state.assistant_history[-1]["role"] == "user":
         with st.spinner("Réflexion..."):
             result = ask(st.session_state.assistant_history[-1]["content"], language=language)
-        assistant_message(result.text, sources=result.sources if (result.sources and not result.refused) else None)
-        st.session_state.assistant_history.append({"role": "assistant", "content": result.text})
+        
+        # ✅ Stockage et affichage avec sources
+        sources = result.sources if (result.sources and not result.refused) else None
+        _append("assistant", result.text, sources=sources)
+        assistant_message(result.text, sources=sources)
 
     user_input = st.chat_input("Posez votre question...")
     if user_input:
-        st.session_state.assistant_history.append({"role": "user", "content": user_input})
+        _append("user", user_input)
         st.rerun()
 
     if st.session_state.assistant_history:
-        if st.button("🗑️ Effacer la conversation", help="Supprime l'historique de cette conversation (ne supprime rien dans l'Historique des analyses)"):
+       if st.button(
+        f"{render_icon('trash-2', size=14, color='var(--on-accent)')} Effacer la conversation",
+        help="Supprime l'historique de cette conversation (ne supprime rien dans l'Historique des analyses)"
+    ):
             st.session_state.assistant_history = []
+            if persist_chat:
+                store.clear_assistant_conversation()
             st.rerun()
