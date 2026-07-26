@@ -128,10 +128,12 @@ def render() -> None:
         st.rerun()
 
     if st.session_state.assistant_history:
-       if st.button(
-        f"{render_icon('trash-2', size=14, color='var(--on-accent)')} Effacer la conversation",
-        help="Supprime l'historique de cette conversation (ne supprime rien dans l'Historique des analyses)"
-    ):
+        # ✅ CORRECTION : utilisation de icon= avec une icône Material au lieu de render_icon() dans le label
+        if st.button(
+            "Effacer la conversation",
+            icon=":material/delete:",
+            help="Supprime l'historique de cette conversation (ne supprime rien dans l'Historique des analyses)"
+        ):
             st.session_state.assistant_history = []
             if persist_chat:
                 store.clear_assistant_conversation()

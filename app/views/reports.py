@@ -100,22 +100,28 @@ def render() -> None:
     </div>
     """, unsafe_allow_html=True)
 
+    # Onglets sans icônes dans le label (car st.tabs() n'accepte pas le HTML)
     tab_json, tab_pdf = st.tabs([
-        f"{render_icon('file-text', size=14)} Aperçu JSON",
-        f"{render_icon('file-text', size=14)} Aperçu PDF"
+        "Aperçu JSON",
+        "Aperçu PDF"
     ])
 
     with tab_json:
         payload = _json_payload(record, language)
-
+        
+        # Ajouter l'icône à l'intérieur de l'onglet
+        st.markdown(f"{render_icon('file-text', size=14)} **Aperçu JSON**", unsafe_allow_html=True)
         st.markdown(f"<p style='font-size:13px; color:var(--text-muted); margin-bottom:4px;'>{render_icon('layers', size=12)} Arborescence interactive :</p>", unsafe_allow_html=True)
         st.json(payload)
-
+        
         st.markdown(f"<p style='font-size:13px; color:var(--text-muted); margin:12px 0 4px 0;'>{render_icon('copy', size=12)} Texte copiable (icône en haut à droite du bloc) :</p>", unsafe_allow_html=True)
         json_str = json.dumps(payload, indent=2, ensure_ascii=False)
         st.code(json_str, language="json")
 
     with tab_pdf:
+        # Ajouter l'icône à l'intérieur de l'onglet
+        st.markdown(f"{render_icon('file-text', size=14)} **Aperçu PDF**", unsafe_allow_html=True)
+
         if not (record.has_images() and config.enable_pdf_export):
             st.info(
                 f"{render_icon('alert-circle', size=16)} Aperçu PDF indisponible : images non enregistrées pour cette analyse "
@@ -136,10 +142,9 @@ def render() -> None:
             base64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
 
             st.markdown(_print_button_html(), unsafe_allow_html=True)
-            st.caption(
-                f"{render_icon('info', size=12)} Ouvre la boîte de dialogue d'impression de votre navigateur pour la page actuelle. "
-                "Pour n'imprimer que le rapport, utilisez plutôt le bouton de téléchargement PDF ci-dessous "
-                "puis imprimez le fichier."
+            st.markdown(
+                f"{render_icon('info', size=12)} *Ouvre la boîte de dialogue d'impression de votre navigateur pour la page actuelle. Pour n'imprimer que le rapport, utilisez plutôt le bouton de téléchargement PDF ci-dessous puis imprimez le fichier.*",
+                unsafe_allow_html=True
             )
 
             st.markdown(
@@ -148,13 +153,13 @@ def render() -> None:
                 f'type="application/pdf"></iframe>',
                 unsafe_allow_html=True,
             )
-            st.caption(
-                f"{render_icon('alert-triangle', size=12)} L'aperçu inline nécessite un lecteur PDF intégré au navigateur "
-                "(fonctionne sur la plupart des navigateurs de bureau ; peut être indisponible sur certains navigateurs mobiles)."
+            st.markdown(
+                f"{render_icon('alert-triangle', size=12)} *L'aperçu inline nécessite un lecteur PDF intégré au navigateur (fonctionne sur la plupart des navigateurs de bureau ; peut être indisponible sur certains navigateurs mobiles).*",
+                unsafe_allow_html=True
             )
 
             st.download_button(
-                label=f"{render_icon('download', size=14, color='var(--on-accent)')} Télécharger ce PDF",
+                label="Télécharger ce PDF",
                 data=pdf_bytes,
                 file_name=f"rapport_{record.id}.pdf",
                 mime="application/pdf",

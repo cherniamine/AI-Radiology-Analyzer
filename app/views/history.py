@@ -53,10 +53,12 @@ def render() -> None:
     # ---- Recherche et filtres ----
     filter_cols = st.columns([2, 1])
     with filter_cols[0]:
+        st.markdown(f"{render_icon('search', size=14)} **Rechercher par nom de fichier**", unsafe_allow_html=True)
         search = st.text_input(
-            f"{render_icon('search', size=14)} Rechercher par nom de fichier",
+            "",
             value="",
-            placeholder="ex: scan_001.png"
+            placeholder="ex: scan_001.png",
+            label_visibility="collapsed"
         )
     with filter_cols[1]:
         class_options = ["Toutes les classes"] + [class_color(c)[2] for c in CLASS_NAMES]
@@ -94,15 +96,21 @@ def render() -> None:
             with header_cols[3]:
                 st.markdown(f"<span style='font-size:12px; color:var(--text-muted);'>{render_icon('cpu', size=12)} {record.inference_ms:.0f} ms</span>", unsafe_allow_html=True)
 
-            with st.expander(f"{render_icon('file-text', size=14)} Détails et export"):
-                st.markdown(f"**{render_icon('eye', size=14)} Observations** — {record.findings}")
-                st.markdown(f"**{render_icon('message-circle', size=14)} Impression** — {record.impression}")
-                st.markdown(f"**{render_icon('shield-check', size=14)} Recommandation** — {record.recommendation}")
+            with st.expander("Détails et export"):
+                st.markdown(f"{render_icon('file-text', size=14)} **Détails et export**", unsafe_allow_html=True)
+                
+                st.markdown(f"**{render_icon('eye', size=14)} Observations** — {record.findings}", unsafe_allow_html=True)
+                st.markdown(f"**{render_icon('message-circle', size=14)} Impression** — {record.impression}", unsafe_allow_html=True)
+                st.markdown(f"**{render_icon('shield-check', size=14)} Recommandation** — {record.recommendation}", unsafe_allow_html=True)
 
+                # === BOUTONS AVEC ICÔNES MATERIAL ===
+                # Les icônes Material sont en currentColor, elles héritent
+                # automatiquement de la couleur du bouton définie dans theme.py
                 action_cols = st.columns(3)
+                
                 with action_cols[0]:
                     st.download_button(
-                        label=f"{render_icon('file-text', size=14)} JSON",
+                        label="JSON",
                         data=json.dumps(_json_payload(record, language), indent=2, ensure_ascii=False).encode("utf-8"),
                         file_name=f"analyse_{record.id}.json",
                         mime="application/json",
@@ -110,7 +118,9 @@ def render() -> None:
                         key=f"json_{record.id}",
                         width='stretch',
                         disabled=not config.enable_json_export,
+                        icon=":material/data_object:",
                     )
+                    
                 with action_cols[1]:
                     if record.has_images() and config.enable_pdf_export:
                         report = build_report(
@@ -125,28 +135,32 @@ def render() -> None:
                             heatmap_img_rgb=record.heatmap_image(),
                         )
                         st.download_button(
-                            label=f"{render_icon('file-text', size=14)} PDF",
+                            label="PDF",
                             data=pdf_bytes,
                             file_name=f"rapport_{record.id}.pdf",
                             mime="application/pdf",
                             help="PDF régénéré à partir des images enregistrées (aucune ré-analyse)",
                             key=f"pdf_{record.id}",
                             width='stretch',
+                            icon=":material/picture_as_pdf:",
                         )
                     else:
                         st.button(
-                            label=f"{render_icon('alert-circle', size=14)} PDF indisponible",
+                            label="PDF indisponible",
                             disabled=True,
                             key=f"pdf_disabled_{record.id}",
                             width='stretch',
-                            help="Images non enregistrées pour cette analyse (historique désactivé au moment de l'analyse)"
+                            help="Images non enregistrées pour cette analyse (historique désactivé au moment de l'analyse)",
+                            icon=":material/block:",
                         )
+                        
                 with action_cols[2]:
                     if st.button(
-                        label=f"{render_icon('trash-2', size=14)} Supprimer",
+                        label="Supprimer",
                         key=f"delete_{record.id}",
                         width='stretch',
-                        help="Suppression définitive de cette analyse de l'historique"
+                        help="Suppression définitive de cette analyse de l'historique",
+                        icon=":material/delete:",
                     ):
                         store.delete(record.id)
                         st.rerun()

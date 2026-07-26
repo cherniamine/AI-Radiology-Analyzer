@@ -146,6 +146,54 @@ def _md(html: str) -> str:
 
 
 # ==============================================================
+def download_button_with_icon(icon_name, label, data, file_name, mime, help_text, key):
+    """Crée un bouton de téléchargement avec icône.
+    Le vrai st.download_button est masqué via CSS, seul le bouton stylé reste visible.
+    """
+    # Conteneur nommé pour cibler précisément le bouton natif
+    container = st.container(key=f"container_{key}")
+    with container:
+        # Bouton stylé + CSS pour masquer le vrai download_button
+        st.markdown(_md(f"""
+        <style>
+            /* Masque le vrai st.download_button à l'intérieur de ce conteneur */
+            .st-key-container_{key} div[data-testid="stDownloadButton"] {{
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip: rect(0,0,0,0);
+                border: 0;
+                padding: 0;
+                margin: -1px;
+            }}
+        </style>
+        <div style="display: flex; justify-content: center;">
+            <button onclick="document.getElementById('{key}').click()" style="
+                background: var(--accent-gradient); color: var(--on-accent); border: none;
+                border-radius: 8px; padding: 10px 24px; font-weight: 600; font-size: 14px;
+                cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+                box-shadow: 0 2px 10px rgba(194,121,12,0.2); transition: all 0.2s;
+                width: 100%; justify-content: center;
+            ">
+                {render_icon(icon_name, size=14, color='var(--on-accent)')} {label}
+            </button>
+        </div>
+        """), unsafe_allow_html=True)
+
+        # Vrai bouton de téléchargement (masqué par le CSS ci-dessus)
+        st.download_button(
+            label="",
+            data=data,
+            file_name=file_name,
+            mime=mime,
+            help=help_text,
+            key=key,
+            width='stretch',
+        )
+
+
+# ==============================================================
 def get_model_input_shape(model):
     input_shape = model.input_shape
     if isinstance(input_shape, list):
@@ -412,34 +460,10 @@ def render() -> None:
     # ==============================================================
     # PROCESSING
     # ==============================================================
-    #
-    # IMPORTANT (cache par lot de fichiers) : sans ce cache, TOUTE la boucle
-    # ci-dessous (inference CNN, Grad-CAM, ET ecriture dans l'historique
-    # SQLite via get_store().save()) se relancait a CHAQUE rerun du script —
-    # y compris ceux declenches par des widgets totalement etrangers a cette
-    # page (bouton clair/sombre et selecteur de langue dans la sidebar de
-    # predict.py, qui appellent st.rerun()). Consequence concrete : chaque
-    # changement de theme ou de langue dupliquait silencieusement les memes
-    # analyses dans persistence.HistoryStore, en plus de re-executer un
-    # modele TensorFlow inutilement (lent).
-    #
-    # CORRECTION (constat verifie en conditions reelles, pas seulement en
-    # theorie) : contrairement a l'hypothese initiale, st.file_uploader NE
-    # conserve PAS de facon fiable les fichiers uploades a travers un rerun
-    # declenche par un widget d'une autre partie de la page (ici, la sidebar
-    # de predict.py) — `uploaded_files` redevient vide sur ce rerun. Le cache
-    # ci-dessous ne suffit donc pas a lui seul : il faut aussi POUVOIR
-    # reafficher les resultats caches meme quand `uploaded_files` est vide
-    # sur le run courant (voir le bloc `elif` juste apres, et le changement
-    # de condition d'affichage plus bas : `if results:` au lieu de
-    # `if uploaded_files and results:`).
-    #
-    # _files_fingerprint identifie un lot de fichiers par (nom, taille) —
-    # suffisant pour detecter un nouvel upload sans avoir a hacher le
-    # contenu binaire de chaque image a chaque rerun.
     results = []
     rejected = []
     zip_buffer = BytesIO()
+    
     if uploaded_files:
         fingerprint = _files_fingerprint(uploaded_files)
         cache_hit = (
@@ -599,10 +623,6 @@ def render() -> None:
             """), unsafe_allow_html=True)
             st.stop()
     elif "_analysis_results" in st.session_state:
-        # Pas de fichier renvoye par st.file_uploader sur CE run precis, mais
-        # une analyse precedente existe dans cette session : on la reaffiche
-        # plutot que de tout vider. C'est le coeur du correctif — voir le
-        # commentaire plus haut au-dessus de `results = []`.
         results = st.session_state["_analysis_results"]
         rejected = st.session_state.get("_analysis_rejected", [])
         zip_buffer = st.session_state.get("_analysis_zip_buffer", zip_buffer)
@@ -739,14 +759,14 @@ def render() -> None:
         </div>
         """), unsafe_allow_html=True)
         class_cols = st.columns(4)
-        for idx, cname in enumerate(CLASS_NAMES):
+        for cls_idx, cname in enumerate(CLASS_NAMES):
             class_data = df_results[df_results["Predicted Class"] == cname]
             count = len(class_data)
             percent = (count / len(df_results) * 100) if len(df_results) > 0 else 0
             avg = class_data["Confidence"].mean() if count > 0 else 0
             color, soft, label, icon = class_color(cname)
 
-            with class_cols[idx]:
+            with class_cols[cls_idx]:
                 st.markdown(_md(f"""
                 <div class='card' style='height:100%; border-left: 4px solid {color};'>
                     <p style='margin:0 0 12px 0; font-weight:600; color:{color}; font-size:14px;'>
@@ -781,7 +801,7 @@ def render() -> None:
         </div>
         """), unsafe_allow_html=True)
 
-        for idx, (_, row) in enumerate(df_sorted.iterrows()):
+        for img_idx, (_, row) in enumerate(df_sorted.iterrows()):
             color, soft, label, icon = class_color(row["Predicted Class"])
             fname = row["Image"] if len(row["Image"]) <= 40 else row["Image"][:37] + "..."
             confidence = row["Confidence"]
@@ -799,25 +819,23 @@ def render() -> None:
 
             card_alpha = st.slider(
                 "Intensité", 0.0, 1.0, float(heatmap_alpha), 0.05,
-                key=f"alpha_{idx}", label_visibility="collapsed",
+                key=f"alpha_{img_idx}", label_visibility="collapsed",
                 help="Ajuste l'opacité de la fusion Grad-CAM pour cette image uniquement",
             )
-            heatmap_only = colorize_heatmap(row["Original"].shape, row["Heatmap"], colormap)
+            
             live_overlay = overlay_heatmap_cv(row["Original"], row["Heatmap"], alpha=card_alpha, colormap=colormap)
 
             if live_overlay.dtype != np.uint8:
                 live_overlay = (live_overlay * 255).astype(np.uint8) if live_overlay.max() <= 1.0 else live_overlay.astype(np.uint8)
-            if heatmap_only.dtype != np.uint8:
-                heatmap_only = (heatmap_only * 255).astype(np.uint8) if heatmap_only.max() <= 1.0 else heatmap_only.astype(np.uint8)
 
-            # Images avec icônes au lieu d'émojis
-            img_col1, img_col2, img_col3 = st.columns(3)
+            # Images : Original et Grad-CAM (fusion) uniquement
+            img_col1, img_col2 = st.columns(2)
             with img_col1:
-                st.image(row["Original"], width='stretch', caption=f"{render_icon('image', size=12)} Original", output_format="auto")
+                st.markdown(f"{render_icon('image', size=12)} **Original**", unsafe_allow_html=True)
+                st.image(row["Original"], width='stretch', output_format="auto")
             with img_col2:
-                st.image(heatmap_only, width='stretch', caption=f"{render_icon('flame', size=12)} Grad-CAM", output_format="auto")
-            with img_col3:
-                st.image(live_overlay, width='stretch', caption=f"{render_icon('layers', size=12)} Fusion", output_format="auto")
+                st.markdown(f"{render_icon('flame', size=12)} **Grad-CAM**", unsafe_allow_html=True)
+                st.image(live_overlay, width='stretch', output_format="auto")
 
             row_probabilities = {name: row.get(f"Prob_{name}", 0.0) for name in CLASS_NAMES}
             gauge_col, bars_col = st.columns([1, 2])
@@ -851,30 +869,56 @@ def render() -> None:
             """), unsafe_allow_html=True)
 
             safe_name = os.path.splitext(row["Image"])[0].replace(" ", "_").replace("-", "_")
-            png_col1, png_col2, png_col3 = st.columns(3)
-            for col, img, suffix, dl_label in [
-                (png_col1, row["Original"], "original", "Original"),
-                (png_col2, heatmap_only, "heatmap", "Heatmap"),
-                (png_col3, live_overlay, "overlay", "Fusion"),
-            ]:
-                with col:
-                    ok, buf = cv2.imencode(".png", cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-                    if ok:
-                        st.markdown(_md(f"""
-                        <div style="display: flex; justify-content: center;">
-                            <a href="data:image/png;base64,{base64.b64encode(buf).decode()}" download="{safe_name}_{suffix}.png" style="text-decoration: none;">
-                                <button style="background: var(--accent-gradient); color: var(--on-accent); border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(194,121,12,0.2); transition: all 0.2s;">
-                                    {render_icon('download', size=14)} {dl_label}
-                                </button>
-                            </a>
-                        </div>
-                        """), unsafe_allow_html=True)
-
-            # Report avec icône
-            with st.expander(f"{render_icon('file-text', size=14)} Rapport IA détaillé"):
-                report = row["Report"]
-                report_dict = report.to_dict() if hasattr(report, 'to_dict') else report
             
+            # Boutons de téléchargement pour cette image (UNIQUEMENT ICI)
+            png_col1, png_col2, download_col = st.columns(3)
+            
+            with png_col1:
+                ok, buf = cv2.imencode(".png", cv2.cvtColor(row["Original"], cv2.COLOR_RGB2BGR))
+                if ok:
+                    download_button_with_icon(
+                        'download',
+                        'Original',
+                        base64.b64encode(buf).decode(),
+                        f"{safe_name}_original.png",
+                        "image/png",
+                        "Télécharger l'image originale",
+                        f"dl_original_{img_idx}"
+                    )
+            
+            with png_col2:
+                ok, buf = cv2.imencode(".png", cv2.cvtColor(live_overlay, cv2.COLOR_RGB2BGR))
+                if ok:
+                    download_button_with_icon(
+                        'download',
+                        'Grad-CAM',
+                        base64.b64encode(buf).decode(),
+                        f"{safe_name}_gradcam.png",
+                        "image/png",
+                        "Télécharger l'image Grad-CAM",
+                        f"dl_gradcam_{img_idx}"
+                    )
+            
+            with download_col:
+                report = row["Report"]
+                pdf_bytes = generate_pdf_report(report, row["Original"], live_overlay, row["Heatmap"])
+                download_button_with_icon(
+                    'file-text',
+                    'Rapport (PDF)',
+                    pdf_bytes,
+                    f"rapport_{safe_name}.pdf",
+                    "application/pdf",
+                    "Rapport complet pour cette image",
+                    f"pdf_dl_{img_idx}"
+                )
+
+            # Rapport IA détaillé (SANS boutons de téléchargement)
+            with st.expander("Rapport IA détaillé"):
+                st.markdown(f"{render_icon('file-text', size=14)} **Rapport IA détaillé**", unsafe_allow_html=True)
+                st.markdown("---")
+                
+                report_dict = report.to_dict() if hasattr(report, 'to_dict') else report
+
                 st.markdown(_md(f"""
                 <div style="display:grid; gap:12px;">
                     <div style="background:var(--bg-input); padding:12px 16px; border-radius:var(--radius-sm); border-left: 4px solid #2563EB;">
@@ -898,20 +942,9 @@ def render() -> None:
                 </div>
                 """), unsafe_allow_html=True)
 
-                pdf_bytes = generate_pdf_report(report, row["Original"], live_overlay, heatmap_only)
-                st.download_button(
-                    label=f"{render_icon('file-text', size=14)} Télécharger le rapport (PDF)",
-                    data=pdf_bytes,
-                    file_name=f"rapport_{safe_name}.pdf",
-                    mime="application/pdf",
-                    help="Rapport complet pour cette image : original, Grad-CAM, fusion et observations",
-                    key=f"pdf_dl_{idx}",
-                    width='stretch',
-                )
-
             st.markdown("<div style='margin-bottom:24px;'></div>", unsafe_allow_html=True)
 
-        # Export Section - avec icônes
+        # Export Section globale
         st.markdown(_md(f"""
         <div style='margin: 40px 0 16px 0;'>
             <h2>{render_icon('archive', size=16, color='var(--accent-primary)')} Exporter les résultats</h2>
@@ -921,25 +954,27 @@ def render() -> None:
         col_dl1, col_dl2, col_dl3 = st.columns(3)
     
         with col_dl1:
-            st.download_button(
-                label=f"{render_icon('archive', size=14)} Visualisations (ZIP)",
-                data=zip_buffer.getvalue(),
-                file_name=f"radiology_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
-                mime="application/zip",
-                help="Toutes les radiographies avec superposition Grad-CAM",
-                width='stretch',
+            download_button_with_icon(
+                'archive',
+                'Visualisations (ZIP)',
+                zip_buffer.getvalue(),
+                f"radiology_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
+                "application/zip",
+                "Toutes les radiographies avec superposition Grad-CAM",
+                "zip_dl"
             )
     
         with col_dl2:
             csv_columns = [col for col in df_results.columns if col not in ["Overlay", "Original", "Heatmap", "Report"]]
             csv_data = df_results[csv_columns].to_csv(index=False, encoding="utf-8-sig")
-            st.download_button(
-                label=f"{render_icon('bar-chart-3', size=14)} Rapport CSV",
-                data=csv_data.encode("utf-8-sig"),
-                file_name=f"radiology_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                mime="text/csv",
-                help="Prédictions détaillées avec probabilités par classe",
-                width='stretch',
+            download_button_with_icon(
+                'bar-chart-3',
+                'Rapport CSV',
+                csv_data.encode("utf-8-sig"),
+                f"radiology_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                "text/csv",
+                "Prédictions détaillées avec probabilités par classe",
+                "csv_dl"
             )
     
         with col_dl3:
@@ -948,16 +983,17 @@ def render() -> None:
                  for _, row in df_results.iterrows()],
                 indent=2, ensure_ascii=False,
             )
-            st.download_button(
-                label=f"{render_icon('file-text', size=14)} Rapports JSON",
-                data=all_reports_json.encode("utf-8"),
-                file_name=f"radiology_reports_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                mime="application/json",
-                help="Rapports structurés pour chaque image",
-                width='stretch',
+            download_button_with_icon(
+                'file-text',
+                'Rapports JSON',
+                all_reports_json.encode("utf-8"),
+                f"radiology_reports_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                "application/json",
+                "Rapports structurés pour chaque image",
+                "json_dl"
             )
 
-        # Message de succès avec icône professionnelle
+        # Message de succès
         st.markdown(_md(f"""
         <div class="card" style="border-left: 4px solid var(--success-text); margin-top: 24px;">
             <div style="display: flex; align-items: center; gap: 12px;">
