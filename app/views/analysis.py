@@ -23,8 +23,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-import tensorflow as tf
-from tensorflow import keras
+import tensorflow as tf , keras
 
 from config import config, CLASS_NAMES, CLASS_META, DATASET_SIZE, class_color, load_real_metrics
 from translator import get_language

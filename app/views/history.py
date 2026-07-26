@@ -55,10 +55,10 @@ def render() -> None:
     with filter_cols[0]:
         st.markdown(f"{render_icon('search', size=14)} **Rechercher par nom de fichier**", unsafe_allow_html=True)
         search = st.text_input(
-            "",
+            "Rechercher par nom de fichier",  
             value="",
             placeholder="ex: scan_001.png",
-            label_visibility="collapsed"
+            label_visibility="collapsed"  
         )
     with filter_cols[1]:
         class_options = ["Toutes les classes"] + [class_color(c)[2] for c in CLASS_NAMES]
