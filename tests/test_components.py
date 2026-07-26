@@ -159,8 +159,10 @@ class TestChatBubbles:
 
     def test_assistant_message_includes_sources_when_given(self):
         html = _build_assistant_message_html("Réponse", sources=["faq.md", "overview.md"])
+        # Les noms de fichiers sont transformés : faq.md -> Faq, overview.md -> Overview
         assert "Faq" in html
         assert "Overview" in html
+        assert "Sources :" in html
 
     def test_assistant_message_omits_sources_block_when_none(self):
         html = _build_assistant_message_html("Réponse", sources=None)
@@ -171,3 +173,13 @@ class TestChatBubbles:
         assistant_html = _build_assistant_message_html("test")
         assert "flex-end" in user_html
         assert "flex-start" in assistant_html
+
+
+class TestFooter:
+    def test_includes_all_provided_information(self):
+        html = _build_footer_html("AI Radiology Analyzer", "1.0.0", "MIT", ["TensorFlow", "Streamlit"])
+        assert "AI Radiology Analyzer" in html
+        assert "1.0.0" in html
+        assert "MIT" in html
+        assert "TensorFlow" in html
+        assert "Streamlit" in html
