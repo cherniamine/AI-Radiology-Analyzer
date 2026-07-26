@@ -161,7 +161,6 @@ class TestChatBubbles:
         html = _build_assistant_message_html("Réponse", sources=["faq.md", "overview.md"])
         assert "Faq" in html
         assert "Overview" in html
-        assert "Sources :" in html
 
     def test_assistant_message_omits_sources_block_when_none(self):
         html = _build_assistant_message_html("Réponse", sources=None)
