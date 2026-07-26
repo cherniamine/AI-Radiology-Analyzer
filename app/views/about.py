@@ -15,6 +15,21 @@ from components import section_title, glass_card, metric_card, footer
 from icons import icon as render_icon
 
 
+def _split_roadmap_items(raw: str, marker: str) -> list[str]:
+    """Découpe une chaîne de roadmap (ex. "✅ A · ✅ B") en items nettoyés,
+    sans le marqueur emoji ni les espaces superflus — le marqueur est
+    redessiné via une icône SVG (voir plus bas), pour rester cohérent avec
+    le reste du design system plutôt que de garder l'emoji tel quel."""
+    items = []
+    for part in raw.split("·"):
+        cleaned = part.strip()
+        if cleaned.startswith(marker):
+            cleaned = cleaned[len(marker):].strip()
+        if cleaned:
+            items.append(cleaned)
+    return items
+
+
 def render() -> None:
     section_title("hospital", t("common.app_title"), t("about.version_line", version=config.app_version))
 
@@ -76,57 +91,50 @@ def render() -> None:
     <ul style="font-size:13.5px; line-height:1.8; padding-left:20px; list-style:none;">{limitations_html}</ul>
     """)
 
-    # Roadmap avec icônes ✅ et 🚧 remplacées - Version avec deux colonnes
+    # ==============================================================
+    # ROADMAP — version traduite dynamiquement
+    # ==============================================================
+    done_items = _split_roadmap_items(t("about.roadmap_done"), "✅")
+    pending_items = _split_roadmap_items(t("about.roadmap_pending"), "🚧")
+
+    # Ajouter les labels "Terminé" / "En cours" traduits
+    # Ces clés doivent être ajoutées dans les fichiers de langue
+    done_label = t("about.roadmap_done_label") if "about.roadmap_done_label" in t("about") else "Terminé"
+    pending_label = t("about.roadmap_pending_label") if "about.roadmap_pending_label" in t("about") else "En cours"
+
+    done_html = "".join(
+        f'<div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">'
+        f'{render_icon("check-circle", size=14, color="var(--success-text)")} <span>{item}</span></div>'
+        for item in done_items
+    )
+    pending_html = "".join(
+        f'<div style="display:flex; align-items:center; gap:8px; color:var(--warning-text);">'
+        f'{render_icon("alert-triangle", size=14, color="var(--warning-text)")} <span>{item}</span></div>'
+        for item in pending_items
+    )
+
     glass_card(f"""
     <h3>{render_icon('sparkles', size=18)} {t('about.roadmap_title')}</h3>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:13.5px; line-height:2;">
         <div>
             <div style="font-weight:600; color:var(--success-text); margin-bottom:8px;">
-                {render_icon('check-circle', size=14, color='var(--success-text)')} Terminé
+                {render_icon('check-circle', size=14, color='var(--success-text)')} {done_label}
             </div>
-            <div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">
-                {render_icon('check-circle', size=14, color='var(--success-text)')} <span>Architecture documentée</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">
-                {render_icon('check-circle', size=14, color='var(--success-text)')} <span>Validation des entrées</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">
-                {render_icon('check-circle', size=14, color='var(--success-text)')} <span>Rapport IA (PDF/JSON)</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">
-                {render_icon('check-circle', size=14, color='var(--success-text)')} <span>Grad-CAM comparatif</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">
-                {render_icon('check-circle', size=14, color='var(--success-text)')} <span>Docker</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">
-                {render_icon('check-circle', size=14, color='var(--success-text)')} <span>CI/CD</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">
-                {render_icon('check-circle', size=14, color='var(--success-text)')} <span>Navigation multi-pages</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">
-                {render_icon('check-circle', size=14, color='var(--success-text)')} <span>Persistance (Historique, Dashboard)</span>
-            </div>
+            {done_html}
         </div>
         <div>
             <div style="font-weight:600; color:var(--warning-text); margin-bottom:8px;">
-                {render_icon('alert-triangle', size=14, color='var(--warning-text)')} En cours
+                {render_icon('alert-triangle', size=14, color='var(--warning-text)')} {pending_label}
             </div>
-            <div style="display:flex; align-items:center; gap:8px; color:var(--warning-text);">
-                {render_icon('alert-triangle', size=14, color='var(--warning-text)')} <span>Internationalisation complète (en/fr/ar)</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; color:var(--warning-text);">
-                {render_icon('alert-triangle', size=14, color='var(--warning-text)')} <span>Assistant IA (RAG + Ollama)</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; color:var(--warning-text);">
-                {render_icon('alert-triangle', size=14, color='var(--warning-text)')} <span>Paramètres éditables</span>
-            </div>
+            {pending_html}
         </div>
     </div>
     """)
 
     footer(
-        config.app_title, config.app_version, "MIT",
+        config.app_title, 
+        config.app_version, 
+        "MIT",
         ["TensorFlow", "Streamlit", "Plotly", "ReportLab", "Ollama"],
+        built_with_text=t("about.footer_built_with"),
     )

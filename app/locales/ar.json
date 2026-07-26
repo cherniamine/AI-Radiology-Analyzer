@@ -23,6 +23,8 @@
     "accuracy_label": "الدقة (بيانات الاختبار)",
     "training_images_label": "صور التدريب",
     "classes_label": "عدد الفئات",
+    "roadmap_done_label": "منجز",
+    "roadmap_pending_label": "قيد التنفيذ",
     "architecture_title": "البنية التقنية",
     "technologies_title": "التقنيات المستخدمة",
     "limitations_title": "القيود المعروفة",

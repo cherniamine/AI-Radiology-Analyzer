@@ -272,18 +272,36 @@ def user_message(text: str) -> None:
 
 def assistant_message(text: str, sources: Optional[List[str]] = None) -> None:
     st.markdown(_build_assistant_message_html(text, sources), unsafe_allow_html=True)
+
+
 # ==============================================================
 # Footer
 # ==============================================================
-def _build_footer_html(app_title: str, version: str, license_name: str, tech_list: List[str]) -> str:
-    tech_str = ", ".join(tech_list)
+def _build_footer_html(
+    app_title: str, 
+    version: str, 
+    license_name: str, 
+    tech_list: List[str],
+    built_with_text: Optional[str] = None
+) -> str:
+    """Construit le footer avec texte traduit possible."""
+    if built_with_text is None:
+        tech_str = ", ".join(tech_list)
+        built_with_text = f"Construit avec {tech_str}."
     return f"""
     <div class="footer">
         <p>{app_title} &middot; Version {version} &middot; Licence {license_name}</p>
-        <p style="font-size:11px;">Construit avec {tech_str}.</p>
+        <p style="font-size:11px;">{built_with_text}</p>
     </div>
     """
 
 
-def footer(app_title: str, version: str, license_name: str, tech_list: List[str]) -> None:
-    st.markdown(_build_footer_html(app_title, version, license_name, tech_list), unsafe_allow_html=True)
+def footer(
+    app_title: str, 
+    version: str, 
+    license_name: str, 
+    tech_list: List[str],
+    built_with_text: Optional[str] = None
+) -> None:
+    """Affiche le footer avec texte traduit possible."""
+    st.markdown(_build_footer_html(app_title, version, license_name, tech_list, built_with_text), unsafe_allow_html=True)

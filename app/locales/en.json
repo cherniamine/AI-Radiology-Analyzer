@@ -23,6 +23,8 @@
     "accuracy_label": "Accuracy (test set)",
     "training_images_label": "Training images",
     "classes_label": "Classes",
+    "roadmap_done_label": "Done",
+    "roadmap_pending_label": "In progress",
     "architecture_title": "Architecture",
     "technologies_title": "Technologies",
     "limitations_title": "Known limitations",

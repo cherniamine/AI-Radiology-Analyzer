@@ -21,6 +21,8 @@
     "overview_title": "Vue d'ensemble",
     "overview_text": "Ce projet classe des radiographies pulmonaires en quatre catégories (COVID-19, opacité pulmonaire, pneumonie virale, normal) à l'aide d'un réseau de neurones convolutif, avec cartes d'attention Grad-CAM pour l'explicabilité et génération automatique de rapports structurés.",
     "accuracy_label": "Exactitude (test)",
+    "roadmap_done_label": "Terminé",
+    "roadmap_pending_label": "En cours",
     "training_images_label": "Images d'entraînement",
     "classes_label": "Classes",
     "architecture_title": "Architecture",
