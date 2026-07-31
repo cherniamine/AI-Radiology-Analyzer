@@ -11,7 +11,7 @@ import json
 import streamlit as st
 
 from config import CLASS_NAMES, class_color, config
-from translator import get_language
+from translator import get_language, t
 from persistence import get_store
 from report_generator import build_report, generate_pdf_report
 from components import section_title, empty_state
@@ -38,34 +38,33 @@ def _json_payload(record, language: str) -> dict:
 
 
 def render() -> None:
-    section_title("history", "Historique", "Analyses passées — recherche, filtres, export, suppression")
+    section_title("history", t("history.title"), t("history.subtitle"))
 
     store = get_store()
     language = get_language()
 
     if store.count() == 0:
         empty_state(
-            "Aucune analyse enregistrée",
-            "Les analyses effectuées dans <b>🔬 Nouvelle analyse</b> apparaîtront ici.",
+            t("history.empty_title"), t("history.empty_text"),
         )
         return
 
     # ---- Recherche et filtres ----
     filter_cols = st.columns([2, 1])
     with filter_cols[0]:
-        st.markdown(f"{render_icon('search', size=14)} **Rechercher par nom de fichier**", unsafe_allow_html=True)
+        st.markdown(f"{render_icon('search', size=14)} **{t('history.search_label')}**", unsafe_allow_html=True)
         search = st.text_input(
-            "Rechercher par nom de fichier",  
+            t("history.search_label"),
             value="",
-            placeholder="ex: scan_001.png",
+            placeholder=t("history.search_placeholder"),
             label_visibility="collapsed"  
         )
     with filter_cols[1]:
-        class_options = ["Toutes les classes"] + [class_color(c)[2] for c in CLASS_NAMES]
-        class_choice = st.selectbox("Filtrer par classe", class_options)
+        class_options = [t("history.all_classes")] + [class_color(c)[2] for c in CLASS_NAMES]
+        class_choice = st.selectbox(t("history.filter_by_class"), class_options)
 
     predicted_class_filter = None
-    if class_choice != "Toutes les classes":
+    if class_choice != t("history.all_classes"):
         for cname in CLASS_NAMES:
             if class_color(cname)[2] == class_choice:
                 predicted_class_filter = cname
@@ -73,10 +72,10 @@ def render() -> None:
 
     records = store.list(predicted_class=predicted_class_filter, search=search or None, limit=200)
 
-    st.caption(f"{len(records)} résultat(s)")
+    st.caption(t("history.results_count", count=len(records)))
 
     if not records:
-        st.info(f"{render_icon('info', size=14)} Aucune analyse ne correspond à ces filtres.")
+        st.info(f"{render_icon('info', size=14)} {t('history.no_results')}")
         return
 
     for record in records:
@@ -96,12 +95,12 @@ def render() -> None:
             with header_cols[3]:
                 st.markdown(f"<span style='font-size:12px; color:var(--text-muted);'>{render_icon('cpu', size=12)} {record.inference_ms:.0f} ms</span>", unsafe_allow_html=True)
 
-            with st.expander("Détails et export"):
-                st.markdown(f"{render_icon('file-text', size=14)} **Détails et export**", unsafe_allow_html=True)
+            with st.expander(t("history.details_export")):
+                st.markdown(f"{render_icon('file-text', size=14)} **{t('history.details_export')}**", unsafe_allow_html=True)
                 
-                st.markdown(f"**{render_icon('eye', size=14)} Observations** — {record.findings}", unsafe_allow_html=True)
-                st.markdown(f"**{render_icon('message-circle', size=14)} Impression** — {record.impression}", unsafe_allow_html=True)
-                st.markdown(f"**{render_icon('shield-check', size=14)} Recommandation** — {record.recommendation}", unsafe_allow_html=True)
+                st.markdown(f"**{render_icon('eye', size=14)} {t('history.findings')}** — {record.findings}", unsafe_allow_html=True)
+                st.markdown(f"**{render_icon('message-circle', size=14)} {t('history.impression')}** — {record.impression}", unsafe_allow_html=True)
+                st.markdown(f"**{render_icon('shield-check', size=14)} {t('history.recommendation')}** — {record.recommendation}", unsafe_allow_html=True)
 
                 # === BOUTONS AVEC ICÔNES MATERIAL ===
                 # Les icônes Material sont en currentColor, elles héritent
@@ -110,11 +109,11 @@ def render() -> None:
                 
                 with action_cols[0]:
                     st.download_button(
-                        label="JSON",
+                        label=t("history.download_json"),
                         data=json.dumps(_json_payload(record, language), indent=2, ensure_ascii=False).encode("utf-8"),
                         file_name=f"analyse_{record.id}.json",
                         mime="application/json",
-                        help="Rapport structuré de cette analyse (sans les images)",
+                        help=t("history.download_json_help"),
                         key=f"json_{record.id}",
                         width='stretch',
                         disabled=not config.enable_json_export,
@@ -135,31 +134,31 @@ def render() -> None:
                             heatmap_img_rgb=record.heatmap_image(),
                         )
                         st.download_button(
-                            label="PDF",
+                            label=t("history.download_pdf"),
                             data=pdf_bytes,
                             file_name=f"rapport_{record.id}.pdf",
                             mime="application/pdf",
-                            help="PDF régénéré à partir des images enregistrées (aucune ré-analyse)",
+                            help=t("history.download_pdf_help"),
                             key=f"pdf_{record.id}",
                             width='stretch',
                             icon=":material/picture_as_pdf:",
                         )
                     else:
                         st.button(
-                            label="PDF indisponible",
+                            label=t("history.pdf_unavailable"),
                             disabled=True,
                             key=f"pdf_disabled_{record.id}",
                             width='stretch',
-                            help="Images non enregistrées pour cette analyse (historique désactivé au moment de l'analyse)",
+                            help=t("history.pdf_unavailable_help"),
                             icon=":material/block:",
                         )
                         
                 with action_cols[2]:
                     if st.button(
-                        label="Supprimer",
+                        label=t("history.delete"),
                         key=f"delete_{record.id}",
                         width='stretch',
-                        help="Suppression définitive de cette analyse de l'historique",
+                        help=t("history.delete_help"),
                         icon=":material/delete:",
                     ):
                         store.delete(record.id)

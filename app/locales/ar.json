@@ -23,8 +23,6 @@
     "accuracy_label": "الدقة (بيانات الاختبار)",
     "training_images_label": "صور التدريب",
     "classes_label": "عدد الفئات",
-    "roadmap_done_label": "منجز",
-    "roadmap_pending_label": "قيد التنفيذ",
     "architecture_title": "البنية التقنية",
     "technologies_title": "التقنيات المستخدمة",
     "limitations_title": "القيود المعروفة",
@@ -34,14 +32,20 @@
       "مجموعة بيانات غير متوازنة ولم يتم التحقق منها سريريًا من قبل طبيب أشعة."
     ],
     "roadmap_title": "خارطة الطريق",
-    "roadmap_done": "✅ بنية موثقة · ✅ التحقق من صحة المدخلات · ✅ تقرير ذكي (PDF/JSON) · ✅ مقارنة Grad-CAM · ✅ Docker · ✅ التكامل المستمر (CI/CD) · ✅ تنقل متعدد الصفحات · ✅ حفظ البيانات (السجل ولوحة التحكم)",
-    "roadmap_pending": "🚧 دعم كامل لتعدد اللغات (إنجليزي/فرنسي/عربي) · 🚧 المساعد الذكي (RAG + Ollama) · 🚧 إعدادات قابلة للتعديل",
+    "roadmap_done": "✅ بنية موثقة · ✅ التحقق من صحة المدخلات · ✅ تقرير ذكي (PDF/JSON) · ✅ مقارنة Grad-CAM · ✅ Docker · ✅ التكامل المستمر (CI/CD) · ✅ تنقل متعدد الصفحات · ✅ حفظ البيانات (السجل ولوحة التحكم) · ✅ دعم كامل لتعدد اللغات (إنجليزي/فرنسي/عربي) · ✅ إعدادات قابلة للتعديل",
+    "roadmap_pending": "🚧 المساعد الذكي (RAG + Ollama) — لم يُختبر بعد من طرف إلى طرف مع خادم Ollama حقيقي",
     "footer_built_with": "تم البناء باستخدام TensorFlow وStreamlit وPlotly وReportLab."
   },
   "settings": {
     "title": "الإعدادات",
-    "subtitle": "الإعدادات الحالية للتطبيق (للقراءة فقط في الوقت الحالي).",
-    "edit_badge": "🚧 التعديل غير متاح بعد (المرحلة 6)",
+    "subtitle": "إعدادات التطبيق — قابلة للتعديل خلال هذه الجلسة.",
+    "edit_badge": "تعديلات مؤقتة لهذه الجلسة (غير محفوظة على القرص)",
+    "sections": {
+      "general": "عام",
+      "analysis": "التحليل",
+      "features": "الميزات",
+      "assistant": "المساعد الذكي"
+    },
     "rows": {
       "default_language": "اللغة الافتراضية",
       "default_theme": "المظهر الافتراضي",
@@ -54,6 +58,234 @@
       "llm_provider": "مزوّد النموذج اللغوي (المساعد)",
       "ollama_model": "نموذج Ollama"
     },
-    "note": "هذه القيم مأخوذة من ملف `.env` (راجع `.env.example`) أو من القيم الافتراضية في `app/config.py`."
+    "help": {
+      "gradcam_alpha": "القيمة الافتراضية لشريط تمرير شدة Grad-CAM في صفحة التحليل",
+      "max_upload": "الحجم الأقصى المقبول لكل ملف يتم رفعه، بالميغابايت",
+      "llm_provider": "لا يتوفر حاليًا سوى \"ollama\" (محلي، بدون واجهة برمجة تطبيقات مدفوعة)",
+      "ollama_base_url": "عنوان خادم Ollama المحلي (مثال: http://localhost:11434)",
+      "ollama_model": "اسم نموذج Ollama المراد استخدامه (يجب أن يكون قد تم تنزيله عبر `ollama pull`)",
+      "reset_button": "إعادة ضبط جميع الإعدادات أعلاه إلى قيم .env"
+    },
+    "note": "تنطلق هذه القيم من ملف `.env` (راجع `.env.example`) أو من القيم الافتراضية في `app/config.py`. أي تعديل أعلاه يسري فقط خلال جلسة المتصفح هذه — إعادة تشغيل التطبيق يعيدها إلى قيم `.env`.",
+    "language_theme_note": "تُضبط اللغة والمظهر من الشريط الجانبي، وليس هنا.",
+    "overridden_badge": "مُعدَّل",
+    "reset_button": "↩️ إعادة الضبط إلى قيم .env",
+    "reset_success": "تمت إعادة ضبط الإعدادات إلى قيم .env."
+  },
+  "classes": {
+    "covid": {
+      "label": "كوفيد-19",
+      "description": "إصابة بفيروس SARS-CoV-2"
+    },
+    "lung_opacity": {
+      "label": "عتامة رئوية",
+      "description": "شذوذ خلالي أو حويصلي"
+    },
+    "normal": {
+      "label": "طبيعي",
+      "description": "أشعة سينية طبيعية للصدر"
+    },
+    "viral_pneumonia": {
+      "label": "التهاب رئوي فيروسي",
+      "description": "إصابة فيروسية رئوية"
+    }
+  },
+  "assistant": {
+    "title": "المساعد الذكي",
+    "subtitle": "اسأل عن المشروع أو النموذج أو Grad-CAM أو مستوى الثقة أو Docker.",
+    "disabled": "المساعد الذكي معطّل. فعّله من الإعدادات أو عبر ENABLE_ASSISTANT.",
+    "disclaimer": "يشرح هذا المساعد المشروع ووثائقه فقط. لا يقدم تشخيصًا أو علاجًا أو وصفة أو نصيحة طبية شخصية. لاستفسارات الصحة، استشر مختصًا.",
+    "unavailable": "لم يتم العثور على خادم Ollama في {base_url}. شغّل `ollama serve` ونزّل النموذج `{model}` عبر `ollama pull {model}`.",
+    "suggestions": "اقتراحات:",
+    "thinking": "جارٍ التفكير…",
+    "input_placeholder": "اكتب سؤالك…",
+    "clear": "مسح المحادثة",
+    "clear_help": "يحذف سجل هذه المحادثة دون حذف سجل التحليلات."
+  },
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "subtitle": "نظرة عامة على التحليلات التي أُجريت في هذا التطبيق",
+    "empty_title": "لا توجد تحليلات مسجلة بعد",
+    "empty_text": "ستظهر الإحصائيات هنا بعد أول تحليل تقوم به. توجّه إلى <b>🔬 تحليل جديد</b> للبدء.",
+    "total_analyses": "إجمالي التحليلات",
+    "avg_confidence": "متوسط الثقة",
+    "avg_inference_time": "متوسط زمن الاستدلال",
+    "class_distribution": "التوزيع حسب الفئة",
+    "timeline": "التحليلات عبر الزمن",
+    "timeline_x": "التاريخ",
+    "timeline_y": "عدد التحليلات",
+    "timeline_insufficient": "لا توجد بيانات كافية لعرض تطور زمني.",
+    "caption": "استنادًا إلى {total} تحليل (تحليلات) مسجلة فعليًا — لا توجد بيانات وهمية. يمكن تعطيله عبر ENABLE_HISTORY في .env."
+  },
+  "history": {
+    "title": "السجل",
+    "subtitle": "التحليلات السابقة — بحث، تصفية، تصدير، حذف",
+    "empty_title": "لا توجد تحليلات مسجلة",
+    "empty_text": "ستظهر هنا التحليلات التي تُجرى في <b>🔬 تحليل جديد</b>.",
+    "search_label": "البحث باسم الملف",
+    "search_placeholder": "مثال: scan_001.png",
+    "filter_by_class": "تصفية حسب الفئة",
+    "all_classes": "جميع الفئات",
+    "results_count": "{count} نتيجة",
+    "no_results": "لا توجد تحليلات مطابقة لهذه المرشحات.",
+    "details_export": "التفاصيل والتصدير",
+    "findings": "الملاحظات",
+    "impression": "الانطباع",
+    "recommendation": "التوصية",
+    "download_json": "JSON",
+    "download_json_help": "تقرير منظم لهذا التحليل (دون الصور)",
+    "download_pdf": "PDF",
+    "download_pdf_help": "PDF مُعاد إنشاؤه من الصور المحفوظة (دون إعادة تحليل)",
+    "pdf_unavailable": "PDF غير متوفر",
+    "pdf_unavailable_help": "لم يتم حفظ الصور لهذا التحليل (كان السجل معطلاً وقت التحليل)",
+    "delete": "حذف",
+    "delete_help": "حذف نهائي لهذا التحليل من السجل"
+  },
+  "reports": {
+    "title": "التقارير",
+    "subtitle": "معاينة داخلية لتقرير محفوظ مسبقًا — نسخ وطباعة",
+    "empty_title": "لا يوجد تقرير متاح",
+    "empty_text": "ستظهر هنا التحليلات التي تُجرى في <b>🔬 تحليل جديد</b> للمعاينة.",
+    "select_label": "اختر تحليلاً لمعاينته",
+    "analyzed_on": "تم التحليل في {date}",
+    "confidence": "الثقة {value}%",
+    "tab_json": "معاينة JSON",
+    "tab_pdf": "معاينة PDF",
+    "json_tree_label": "شجرة تفاعلية:",
+    "json_copy_label": "نص قابل للنسخ (أيقونة أعلى يمين الكتلة):",
+    "pdf_unavailable": "معاينة PDF غير متوفرة: لم يتم حفظ الصور لهذا التحليل (كان السجل معطلاً وقت التحليل) أو تصدير PDF معطل.",
+    "print_button": "طباعة هذه الصفحة",
+    "print_caption": "يفتح مربع حوار الطباعة في متصفحك للصفحة الحالية. لطباعة التقرير فقط، استخدم زر تنزيل PDF أدناه ثم اطبع الملف.",
+    "iframe_caption": "⚠️ تتطلب المعاينة الداخلية قارئ PDF مدمجًا في المتصفح (يعمل على معظم متصفحات سطح المكتب؛ قد لا يكون متاحًا على بعض متصفحات الهاتف).",
+    "download_pdf": "تنزيل ملف PDF هذا",
+    "download_pdf_help": "تنزيل الملف لطباعته أو أرشفته بشكل منفصل"
+  },
+  "analysis": {
+    "header": {
+      "subtitle": "تصنيف الأشعة السينية للصدر بمساعدة الذكاء الاصطناعي مع تصور Grad-CAM",
+      "badge_search": "بحث",
+      "badge_classes": "4 فئات"
+    },
+    "readout": {
+      "model": "النموذج",
+      "resolution": "الدقة",
+      "accuracy": "الدقة الإجمالية",
+      "training_images": "صور التدريب"
+    },
+    "sidebar": {
+      "classes_detected": "الفئات المكتشفة",
+      "gradcam_section": "تصور Grad-CAM",
+      "intensity_label": "الشدة",
+      "intensity_help": "شفافية طبقة Grad-CAM",
+      "palette_label": "لوحة الألوان",
+      "palette_help": "لوحة الألوان المستخدمة لرسم خريطة Grad-CAM",
+      "perf_by_class": "الأداء حسب الفئة",
+      "disclaimer_title": "نموذج أكاديمي تجريبي",
+      "disclaimer_text": "لا تحمل التنبؤات أي قيمة تشخيصية ولا تغني عن رأي طبيب الأشعة أو الطبيب."
+    },
+    "upload": {
+      "title": "تحميل صور الأشعة السينية",
+      "description": "أدرج صورة أشعة سينية واحدة أو أكثر للصدر (PNG، JPG). يقدّر النموذج الفئة الأكثر احتمالاً وينشئ خريطة Grad-CAM للمناطق التي أثرت في القرار.",
+      "selector_label": "اختيار الصور"
+    },
+    "processing": {
+      "analyzing_title": "التحليل جارٍ",
+      "images_selected": "{count} صورة (صور) محددة",
+      "in_progress_badge": "قيد التنفيذ",
+      "analyzing_file": "جارٍ تحليل {name}...",
+      "file_too_large": "الملف كبير جدًا ({size} ميغابايت، الحد الأقصى {max} ميغابايت — قابل للتعديل في الإعدادات).",
+      "rejected_size_status": "{name} — مرفوضة (الحجم)",
+      "rejected_size_inline": "الملف كبير جدًا ({size} ميغابايت &gt; {max} ميغابايت)",
+      "invalid_image": "صورة غير صالحة.",
+      "rejected_status": "{name} — مرفوضة",
+      "validation_failed": "فشل التحقق ({ms} مللي ثانية): {reason}",
+      "validation_ok": "التحقق والمعالجة المسبقة ({ms} مللي ثانية)",
+      "prediction_ok": "تنبؤ CNN و Grad-CAM ({ms} مللي ثانية)",
+      "heatmap_ok": "خريطة الحرارة وتصدير ZIP ({ms} مللي ثانية)",
+      "report_ok": "تم إنشاء تقرير الذكاء الاصطناعي ({ms} مللي ثانية)",
+      "history_ok": "تم الحفظ في السجل ({ms} مللي ثانية)",
+      "history_failed": "تم التحليل لكن لم يُحفظ في السجل: {error}",
+      "file_error_status": "{name} — خطأ",
+      "file_error": "خطأ مع {name}: {error}",
+      "rejected_count_title": "{count} صورة (صور) مستبعدة",
+      "no_valid_analysis_title": "لا يوجد تحليل صالح",
+      "no_valid_analysis_text": "لم يتم العثور على أي صورة قابلة للاستخدام. تأكد من أنها أشعة سينية بتدرج رمادي بصيغة PNG/JPG."
+    },
+    "results": {
+      "title": "نتائج التحليل",
+      "processed_images": "الصور المعالجة",
+      "avg_confidence": "متوسط الثقة",
+      "dominant_diagnosis": "التشخيص السائد",
+      "covid_cases": "حالات كوفيد-19 ({percent}%)",
+      "viz_title": "تصور النتائج",
+      "class_distribution": "التوزيع حسب الفئة",
+      "no_class_distribution": "لا توجد بيانات لعرض التوزيع حسب الفئة.",
+      "confidence_distribution": "توزيع درجات الثقة",
+      "no_confidence_distribution": "لا توجد بيانات لعرض توزيع درجات الثقة.",
+      "confidence_avg_annotation": "المتوسط {value}%",
+      "confidence_axis": "الثقة (%)",
+      "images_axis": "عدد الصور",
+      "per_class_title": "التفصيل حسب الفئة",
+      "detected_cases": "الحالات المكتشفة",
+      "avg_confidence_short": "متوسط الثقة"
+    },
+    "gradcam": {
+      "gallery_title": "خرائط Grad-CAM",
+      "interpretation_title": "التفسير.",
+      "interpretation_text": "تُبرز خريطة الحرارة المناطق في الصورة الأكثر تأثيرًا في تنبؤ النموذج. وهي ليست تجزئة للآفة ولا يجب تفسيرها كتحديد سريري دقيق للموقع.",
+      "intensity_help_card": "يضبط شفافية دمج Grad-CAM لهذه الصورة فقط",
+      "caption_original": "الأصلية",
+      "caption_gradcam": "Grad-CAM",
+      "caption_fusion": "الدمج",
+      "gauge_label": "الثقة",
+      "target_class": "الفئة المستهدفة",
+      "confidence": "الثقة",
+      "target_layer": "الطبقة المستهدفة",
+      "layer_not_detected": "غير مكتشفة",
+      "method": "الطريقة",
+      "download_original": "الأصلية",
+      "download_heatmap": "خريطة الحرارة",
+      "download_fusion": "الدمج",
+      "report_expander": "تقرير الذكاء الاصطناعي المفصل",
+      "observations": "الملاحظات",
+      "impression": "الانطباع",
+      "recommendation": "التوصية",
+      "download_pdf": "تنزيل التقرير (PDF)",
+      "download_pdf_help": "تقرير كامل لهذه الصورة: الأصلية وGrad-CAM والدمج والملاحظات"
+    },
+    "export": {
+      "title": "تصدير النتائج",
+      "zip_label": "التصورات (ZIP)",
+      "zip_help": "جميع صور الأشعة مع طبقة Grad-CAM",
+      "csv_label": "تقرير CSV",
+      "csv_help": "تنبؤات مفصلة مع احتمالات كل فئة",
+      "json_label": "تقارير JSON",
+      "json_help": "تقارير منظمة لكل صورة",
+      "success_title": "اكتمل التحليل",
+      "success_text": "تمت معالجة {count} صورة (صور) أشعة بنجاح"
+    },
+    "home": {
+      "how_it_works_title": "كيف يعمل",
+      "how_it_works_text": "يصنّف هذا النموذج التجريبي صور الأشعة السينية للصدر إلى أربع فئات باستخدام شبكة عصبية التفافية مدرَّبة على مجموعة بيانات عامة لصور الأشعة الصدرية. لكل صورة، ينتج النموذج احتمالًا لكل فئة وخريطة Grad-CAM تحدد المناطق التي دفعت تنبؤه.",
+      "step1": "تحميل صورة أشعة سينية واحدة أو أكثر (PNG/JPG)",
+      "step2": "يحسب النموذج احتمالات كل فئة",
+      "step3": "خريطة Grad-CAM تحدد مناطق الاهتمام",
+      "step4": "تصدير التقرير (CSV) والتصورات (ZIP)",
+      "measured_accuracy": "الدقة المقاسة",
+      "dataset_used": "{count} صورة أشعة مستخدمة",
+      "features_title": "الميزات",
+      "feature1_title": "تصنيف 4 فئات",
+      "feature1_desc": "كوفيد-19، عتامة رئوية، التهاب رئوي فيروسي، أو طبيعي، مع درجة ثقة لكل فئة.",
+      "feature2_title": "قابلية التفسير عبر Grad-CAM",
+      "feature2_desc": "خرائط حرارية مُركبة على صورة الأشعة الأصلية، لتصور المناطق التي اعتبرها النموذج ذات صلة.",
+      "feature3_title": "تقارير قابلة للتصدير",
+      "feature3_desc": "تصدير CSV للتنبؤات المفصلة وZIP للتصورات، للتحليل أو الأرشفة."
+    },
+    "errors": {
+      "model_not_found": "النموذج غير موجود: {path}",
+      "loading_model": "جارٍ تحميل النموذج...",
+      "model_load_error": "خطأ أثناء تحميل النموذج: {error}",
+      "layout_error": "خطأ في تخطيط الرسم البياني: {error}"
+    }
   }
 }

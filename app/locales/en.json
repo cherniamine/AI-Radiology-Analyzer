@@ -23,8 +23,6 @@
     "accuracy_label": "Accuracy (test set)",
     "training_images_label": "Training images",
     "classes_label": "Classes",
-    "roadmap_done_label": "Done",
-    "roadmap_pending_label": "In progress",
     "architecture_title": "Architecture",
     "technologies_title": "Technologies",
     "limitations_title": "Known limitations",
@@ -34,14 +32,20 @@
       "Imbalanced dataset, not clinically validated by a radiologist."
     ],
     "roadmap_title": "Roadmap",
-    "roadmap_done": "✅ Documented architecture · ✅ Input validation · ✅ AI report (PDF/JSON) · ✅ Comparative Grad-CAM · ✅ Docker · ✅ CI/CD · ✅ Multi-page navigation · ✅ Persistence (History, Dashboard)",
-    "roadmap_pending": "🚧 Full internationalization (en/fr/ar) · 🚧 AI Assistant (RAG + Ollama) · 🚧 Editable settings",
+    "roadmap_done": "✅ Documented architecture · ✅ Input validation · ✅ AI report (PDF/JSON) · ✅ Comparative Grad-CAM · ✅ Docker · ✅ CI/CD · ✅ Multi-page navigation · ✅ Persistence (History, Dashboard) · ✅ Full internationalization (en/fr/ar) · ✅ Editable settings",
+    "roadmap_pending": "🚧 AI Assistant (RAG + Ollama) — not tested end-to-end with a real Ollama server",
     "footer_built_with": "Built with TensorFlow, Streamlit, Plotly and ReportLab."
   },
   "settings": {
     "title": "Settings",
-    "subtitle": "Current application configuration (read-only for now).",
-    "edit_badge": "🚧 Editing not yet implemented (Phase 6)",
+    "subtitle": "Application configuration — editable for the current session.",
+    "edit_badge": "Session-only changes (not written to disk)",
+    "sections": {
+      "general": "General",
+      "analysis": "Analysis",
+      "features": "Features",
+      "assistant": "AI Assistant"
+    },
     "rows": {
       "default_language": "Default language",
       "default_theme": "Default theme",
@@ -54,6 +58,234 @@
       "llm_provider": "LLM provider (assistant)",
       "ollama_model": "Ollama model"
     },
-    "note": "These values come from `.env` (see `.env.example`) or their defaults in `app/config.py`."
+    "help": {
+      "gradcam_alpha": "Default value of the Grad-CAM intensity slider on the Analysis page",
+      "max_upload": "Maximum accepted size per uploaded file, in megabytes",
+      "llm_provider": "Only \"ollama\" (local, no paid API) is available for now",
+      "ollama_base_url": "Address of the local Ollama server (e.g. http://localhost:11434)",
+      "ollama_model": "Name of the Ollama model to use (must have been downloaded via `ollama pull`)",
+      "reset_button": "Revert all settings above to their .env values"
+    },
+    "note": "These values start from `.env` (see `.env.example`) or their defaults in `app/config.py`. Any change above only applies to this browser session — restarting the application reverts to `.env`.",
+    "language_theme_note": "Language and theme are set from the sidebar, not here.",
+    "overridden_badge": "modified",
+    "reset_button": "↩️ Reset to .env values",
+    "reset_success": "Settings reset to .env values."
+  },
+  "classes": {
+    "covid": {
+      "label": "COVID-19",
+      "description": "SARS-CoV-2 infection"
+    },
+    "lung_opacity": {
+      "label": "Lung opacity",
+      "description": "Interstitial or alveolar abnormality"
+    },
+    "normal": {
+      "label": "Normal",
+      "description": "Normal chest X-ray"
+    },
+    "viral_pneumonia": {
+      "label": "Viral pneumonia",
+      "description": "Viral lung infection"
+    }
+  },
+  "assistant": {
+    "title": "AI Assistant",
+    "subtitle": "Ask questions about the project, the model, Grad-CAM, confidence, or Docker.",
+    "disabled": "The AI Assistant is disabled. Enable it in Settings or through ENABLE_ASSISTANT.",
+    "disclaimer": "This assistant explains the project and its documentation. It never provides a diagnosis, treatment, prescription, or personal medical advice. For health questions, consult a professional.",
+    "unavailable": "Ollama server was not detected at {base_url}. Start `ollama serve` and download `{model}` with `ollama pull {model}`.",
+    "suggestions": "Suggestions:",
+    "thinking": "Thinking…",
+    "input_placeholder": "Ask your question…",
+    "clear": "Clear conversation",
+    "clear_help": "Deletes this conversation history without deleting analysis history."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Overview of analyses performed in this application",
+    "empty_title": "No analysis recorded yet",
+    "empty_text": "Statistics will appear here after your first analysis. Head to <b>🔬 New Analysis</b> to get started.",
+    "total_analyses": "Total analyses",
+    "avg_confidence": "Average confidence",
+    "avg_inference_time": "Average inference time",
+    "class_distribution": "Breakdown by class",
+    "timeline": "Analyses over time",
+    "timeline_x": "Date",
+    "timeline_y": "Analyses",
+    "timeline_insufficient": "Not enough data for a time trend.",
+    "caption": "Based on {total} genuinely recorded analysis/analyses — no simulated data. Toggle via ENABLE_HISTORY in .env."
+  },
+  "history": {
+    "title": "History",
+    "subtitle": "Past analyses — search, filters, export, deletion",
+    "empty_title": "No analysis recorded",
+    "empty_text": "Analyses performed in <b>🔬 New Analysis</b> will appear here.",
+    "search_label": "Search by file name",
+    "search_placeholder": "e.g. scan_001.png",
+    "filter_by_class": "Filter by class",
+    "all_classes": "All classes",
+    "results_count": "{count} result(s)",
+    "no_results": "No analysis matches these filters.",
+    "details_export": "Details and export",
+    "findings": "Findings",
+    "impression": "Impression",
+    "recommendation": "Recommendation",
+    "download_json": "JSON",
+    "download_json_help": "Structured report for this analysis (without images)",
+    "download_pdf": "PDF",
+    "download_pdf_help": "PDF regenerated from the stored images (no re-analysis)",
+    "pdf_unavailable": "PDF unavailable",
+    "pdf_unavailable_help": "Images not stored for this analysis (history was disabled at analysis time)",
+    "delete": "Delete",
+    "delete_help": "Permanently delete this analysis from history"
+  },
+  "reports": {
+    "title": "Reports",
+    "subtitle": "Inline preview of an already recorded report — copy and print",
+    "empty_title": "No report available",
+    "empty_text": "Analyses performed in <b>🔬 New Analysis</b> will appear here for preview.",
+    "select_label": "Choose an analysis to preview",
+    "analyzed_on": "Analyzed on {date}",
+    "confidence": "Confidence {value}%",
+    "tab_json": "JSON Preview",
+    "tab_pdf": "PDF Preview",
+    "json_tree_label": "Interactive tree:",
+    "json_copy_label": "Copyable text (icon at the top right of the block):",
+    "pdf_unavailable": "PDF preview unavailable: images were not stored for this analysis (history disabled at analysis time) or PDF export is disabled.",
+    "print_button": "Print this page",
+    "print_caption": "Opens your browser's print dialog for the current page. To print only the report, use the PDF download button below instead, then print the file.",
+    "iframe_caption": "⚠️ The inline preview requires a PDF reader built into the browser (works on most desktop browsers; may be unavailable on some mobile browsers).",
+    "download_pdf": "Download this PDF",
+    "download_pdf_help": "Download the file to print or archive it separately"
+  },
+  "analysis": {
+    "header": {
+      "subtitle": "AI-assisted chest X-ray classification with Grad-CAM visualization",
+      "badge_search": "Search",
+      "badge_classes": "4 classes"
+    },
+    "readout": {
+      "model": "Model",
+      "resolution": "Resolution",
+      "accuracy": "Accuracy",
+      "training_images": "Training images"
+    },
+    "sidebar": {
+      "classes_detected": "Detected classes",
+      "gradcam_section": "Grad-CAM visualization",
+      "intensity_label": "Intensity",
+      "intensity_help": "Opacity of the Grad-CAM overlay",
+      "palette_label": "Palette",
+      "palette_help": "Color palette used to draw the Grad-CAM map",
+      "perf_by_class": "Performance by class",
+      "disclaimer_title": "Academic prototype",
+      "disclaimer_text": "Predictions have no diagnostic value and do not replace the judgment of a radiologist or physician."
+    },
+    "upload": {
+      "title": "Upload chest X-rays",
+      "description": "Drop one or more chest X-rays (PNG, JPG). The model estimates the most likely class and generates a Grad-CAM map of the regions that influenced the decision.",
+      "selector_label": "Select images"
+    },
+    "processing": {
+      "analyzing_title": "Analysis in progress",
+      "images_selected": "{count} image(s) selected",
+      "in_progress_badge": "IN PROGRESS",
+      "analyzing_file": "Analyzing {name}...",
+      "file_too_large": "File too large ({size} MB, maximum {max} MB — adjustable in Settings).",
+      "rejected_size_status": "{name} — rejected (size)",
+      "rejected_size_inline": "File too large ({size} MB &gt; {max} MB)",
+      "invalid_image": "Invalid image.",
+      "rejected_status": "{name} — rejected",
+      "validation_failed": "Validation failed ({ms} ms): {reason}",
+      "validation_ok": "Validation & preprocessing ({ms} ms)",
+      "prediction_ok": "CNN prediction & Grad-CAM ({ms} ms)",
+      "heatmap_ok": "Heatmap & ZIP export ({ms} ms)",
+      "report_ok": "AI report generated ({ms} ms)",
+      "history_ok": "Saved to history ({ms} ms)",
+      "history_failed": "Analysis completed but not saved to history: {error}",
+      "file_error_status": "{name} — error",
+      "file_error": "Error with {name}: {error}",
+      "rejected_count_title": "{count} image(s) discarded",
+      "no_valid_analysis_title": "No valid analysis",
+      "no_valid_analysis_text": "No usable image was found. Make sure these are grayscale chest X-rays in PNG/JPG format."
+    },
+    "results": {
+      "title": "Analysis results",
+      "processed_images": "Processed images",
+      "avg_confidence": "Average confidence",
+      "dominant_diagnosis": "Dominant diagnosis",
+      "covid_cases": "COVID-19 cases ({percent}%)",
+      "viz_title": "Results visualization",
+      "class_distribution": "Distribution by class",
+      "no_class_distribution": "No data to display for the class distribution.",
+      "confidence_distribution": "Confidence score distribution",
+      "no_confidence_distribution": "No data to display for the confidence distribution.",
+      "confidence_avg_annotation": "average {value}%",
+      "confidence_axis": "Confidence (%)",
+      "images_axis": "Number of images",
+      "per_class_title": "Breakdown by class",
+      "detected_cases": "Detected cases",
+      "avg_confidence_short": "Avg. confidence"
+    },
+    "gradcam": {
+      "gallery_title": "Grad-CAM maps",
+      "interpretation_title": "Interpretation.",
+      "interpretation_text": "The heatmap highlights the regions of the image that most influenced the model's prediction. It is not a segmentation of the lesion and should not be interpreted as an exact clinical localization.",
+      "intensity_help_card": "Adjusts the Grad-CAM overlay opacity for this image only",
+      "caption_original": "Original",
+      "caption_gradcam": "Grad-CAM",
+      "caption_fusion": "Overlay",
+      "gauge_label": "Confidence",
+      "target_class": "Target class",
+      "confidence": "Confidence",
+      "target_layer": "Target layer",
+      "layer_not_detected": "not detected",
+      "method": "Method",
+      "download_original": "Original",
+      "download_heatmap": "Heatmap",
+      "download_fusion": "Overlay",
+      "report_expander": "Detailed AI report",
+      "observations": "Findings",
+      "impression": "Impression",
+      "recommendation": "Recommendation",
+      "download_pdf": "Download report (PDF)",
+      "download_pdf_help": "Full report for this image: original, Grad-CAM, overlay and findings"
+    },
+    "export": {
+      "title": "Export results",
+      "zip_label": "Visualizations (ZIP)",
+      "zip_help": "All chest X-rays with Grad-CAM overlay",
+      "csv_label": "CSV report",
+      "csv_help": "Detailed predictions with per-class probabilities",
+      "json_label": "JSON reports",
+      "json_help": "Structured reports for each image",
+      "success_title": "Analysis complete",
+      "success_text": "{count} chest X-ray(s) processed successfully"
+    },
+    "home": {
+      "how_it_works_title": "How it works",
+      "how_it_works_text": "This prototype classifies chest X-rays into four categories using a convolutional neural network trained on a public chest X-ray dataset. For each image, the model produces a per-class probability and a Grad-CAM map localizing the regions that drove its prediction.",
+      "step1": "Upload one or more chest X-rays (PNG/JPG)",
+      "step2": "The model computes per-class probabilities",
+      "step3": "A Grad-CAM map localizes the regions of interest",
+      "step4": "Export the report (CSV) and visualizations (ZIP)",
+      "measured_accuracy": "Measured accuracy",
+      "dataset_used": "{count} chest X-rays used",
+      "features_title": "Features",
+      "feature1_title": "4-class classification",
+      "feature1_desc": "COVID-19, lung opacity, viral pneumonia, or normal, with a confidence score per class.",
+      "feature2_title": "Grad-CAM explainability",
+      "feature2_desc": "Heatmaps overlaid on the original chest X-ray, to visualize the regions the model deemed relevant.",
+      "feature3_title": "Exportable reports",
+      "feature3_desc": "CSV export of detailed predictions and ZIP export of visualizations, for analysis or archiving."
+    },
+    "errors": {
+      "model_not_found": "Model not found: {path}",
+      "loading_model": "Loading model...",
+      "model_load_error": "Error loading the model: {error}",
+      "layout_error": "Chart layout error: {error}"
+    }
   }
 }

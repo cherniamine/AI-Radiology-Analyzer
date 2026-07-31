@@ -128,8 +128,13 @@ config: AppConfig = AppConfig.from_env()
 # ==============================================================
 CLASS_NAMES = ["COVID", "Lung_Opacity", "NORMAL", "Viral Pneumonia"]
 
+# `key` : cle de traduction sous locales/{lang}.json -> "classes.<key>.label" /
+# "classes.<key>.description". `label`/`description` ci-dessous restent le
+# repli si jamais une langue ne definit pas cette cle (voir class_color /
+# class_description) - jamais un texte invente, toujours du francais connu.
 CLASS_META = {
     "COVID": {
+        "key": "covid",
         "label": "COVID-19",
         "color": "#DC3545",
         "soft": "rgba(220, 53, 69, 0.10)",
@@ -137,6 +142,7 @@ CLASS_META = {
         "description": "Infection à SARS-CoV-2",
     },
     "Lung_Opacity": {
+        "key": "lung_opacity",
         "label": "Opacité pulmonaire",
         "color": "#FD7E14",
         "soft": "rgba(253, 126, 20, 0.10)",
@@ -144,6 +150,7 @@ CLASS_META = {
         "description": "Anomalie interstitielle ou alvéolaire",
     },
     "NORMAL": {
+        "key": "normal",
         "label": "Normal",
         "color": "#28A745",
         "soft": "rgba(40, 167, 69, 0.10)",
@@ -151,6 +158,7 @@ CLASS_META = {
         "description": "Radiographie normale",
     },
     "Viral Pneumonia": {
+        "key": "viral_pneumonia",
         "label": "Pneumonie virale",
         "color": "#007BFF",
         "soft": "rgba(0, 123, 255, 0.10)",
@@ -165,11 +173,38 @@ DATASET_SIZE = 42330
 
 def class_color(name: str) -> tuple[str, str, str, str]:
     """Retourne (couleur, couleur_douce, libelle, nom_icone) pour une classe donnee.
-    Le nom d'icone est une cle de app/icons.py (icons.icon(nom)), pas un emoji."""
+    Le nom d'icone est une cle de app/icons.py (icons.icon(nom)), pas un emoji.
+
+    Le libelle est traduit dans la langue courante via translator.t() quand une
+    cle "classes.<key>.label" existe (voir CLASS_META), sinon repli sur le
+    libelle francais fige ci-dessus - jamais d'exception, jamais de texte
+    invente (meme convention que translator.t())."""
     meta = CLASS_META.get(
         name, {"color": "#64748B", "soft": "rgba(100, 116, 139, 0.10)", "label": name, "icon": "bar-chart-3"}
     )
-    return meta["color"], meta["soft"], meta["label"], meta.get("icon", "bar-chart-3")
+    label = meta["label"]
+    if "key" in meta:
+        from translator import t
+        translated = t(f"classes.{meta['key']}.label")
+        if translated != f"classes.{meta['key']}.label":
+            label = translated
+    return meta["color"], meta["soft"], label, meta.get("icon", "bar-chart-3")
+
+
+def class_description(name: str) -> str:
+    """Description courte d'une classe (utilisee dans la legende de la page
+    Analyse), traduite dans la langue courante - meme logique de repli que
+    class_color()."""
+    meta = CLASS_META.get(name)
+    if meta is None:
+        return ""
+    description = meta["description"]
+    if "key" in meta:
+        from translator import t
+        translated = t(f"classes.{meta['key']}.description")
+        if translated != f"classes.{meta['key']}.description":
+            description = translated
+    return description
 
 
 def load_real_metrics() -> dict | None:
@@ -185,4 +220,3 @@ def load_real_metrics() -> dict | None:
             return json.load(f)
     except Exception:
         return None
-

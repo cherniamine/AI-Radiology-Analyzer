@@ -14,6 +14,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from config import CLASS_NAMES, class_color
+from translator import t
 from persistence import get_store
 from components import section_title, metric_card, empty_state
 from icons import icon as render_icon
@@ -21,8 +22,7 @@ from icons import icon as render_icon
 
 def render() -> None:
     section_title(
-        "bar-chart-3", "Dashboard",
-        "Vue d'ensemble des analyses effectuées dans cette application",
+        "bar-chart-3", t("dashboard.title"), t("dashboard.subtitle"),
     )
 
     store = get_store()
@@ -30,16 +30,14 @@ def render() -> None:
 
     if stats["total"] == 0:
         empty_state(
-            "Aucune analyse enregistrée pour l'instant",
-            "Les statistiques apparaîtront ici après votre première analyse. "
-            "Rendez-vous dans <b>🔬 Nouvelle analyse</b> pour commencer.",
+            t("dashboard.empty_title"), t("dashboard.empty_text"),
         )
         return
 
     # ---- KPI : total + une carte par classe ----
     kpi_cols = st.columns(5)
     with kpi_cols[0]:
-        metric_card(str(stats["total"]), "Analyses totales")
+        metric_card(str(stats["total"]), t("dashboard.total_analyses"))
 
     for i, cname in enumerate(CLASS_NAMES):
         color, soft, label, icon = class_color(cname)
@@ -52,10 +50,10 @@ def render() -> None:
     kpi_cols2 = st.columns(2)
     with kpi_cols2[0]:
         avg_conf_display = f"{stats['avg_confidence']:.1f}%" if stats["avg_confidence"] is not None else "N/A"
-        metric_card(avg_conf_display, "Confiance moyenne")
+        metric_card(avg_conf_display, t("dashboard.avg_confidence"))
     with kpi_cols2[1]:
         avg_inf_display = f"{stats['avg_inference_ms']:.0f} ms" if stats["avg_inference_ms"] is not None else "N/A"
-        metric_card(avg_inf_display, "Temps d'inférence moyen")
+        metric_card(avg_inf_display, t("dashboard.avg_inference_time"))
 
     st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
 
@@ -64,7 +62,7 @@ def render() -> None:
 
     with chart_cols[0]:
         with st.container(border=True):
-            st.markdown(f"<h4>{render_icon('chart-pie', size=16)} Répartition par classe</h4>", unsafe_allow_html=True)
+            st.markdown(f"<h4>{render_icon('chart-pie', size=16)} {t('dashboard.class_distribution')}</h4>", unsafe_allow_html=True)
             per_class = stats["per_class"]
             if per_class:
                 colors_map = {c: class_color(c)[0] for c in CLASS_NAMES}
@@ -84,7 +82,7 @@ def render() -> None:
 
     with chart_cols[1]:
         with st.container(border=True):
-            st.markdown(f"<h4>{render_icon('chart-line', size=16)} Analyses dans le temps</h4>", unsafe_allow_html=True)
+            st.markdown(f"<h4>{render_icon('chart-line', size=16)} {t('dashboard.timeline')}</h4>", unsafe_allow_html=True)
             timeline = stats["timeline"]
             if timeline:
                 days = [row["day"] for row in timeline]
@@ -99,13 +97,12 @@ def render() -> None:
                     margin=dict(t=10, b=10, l=10, r=10), height=320,
                     font=dict(family="Inter", size=12, color="#475569"),
                     plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
-                    xaxis_title="Date", yaxis_title="Analyses",
+                    xaxis_title=t("dashboard.timeline_x"), yaxis_title=t("dashboard.timeline_y"),
                 )
                 st.plotly_chart(fig2, width='stretch')
             else:
-                st.info("Pas assez de données pour une évolution temporelle.")
+                st.info(t("dashboard.timeline_insufficient"))
 
     st.caption(
-        f"Basé sur {stats['total']} analyse(s) réellement enregistrée(s) — "
-        "aucune donnée simulée. Désactivable via ENABLE_HISTORY dans .env."
+        t("dashboard.caption", total=stats["total"])
     )

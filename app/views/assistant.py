@@ -24,8 +24,8 @@ _APP_DIR = os.path.join(_ASSISTANT_PARENT, "..")
 if _APP_DIR not in sys.path:
     sys.path.insert(0, _APP_DIR)
 
-from config import config
-from translator import get_language
+from translator import get_language, t
+from settings_store import get_setting
 from assistant import ask
 from assistant.prompts import SUGGESTED_QUESTIONS
 from components import section_title, user_message, assistant_message
@@ -34,20 +34,17 @@ from icons import icon as render_icon
 
 def render() -> None:
     section_title(
-        "bot", "Assistant IA",
-        "Posez des questions sur le projet, le modèle, Grad-CAM, la confiance, Docker...",
+        "bot", t("assistant.title"), t("assistant.subtitle"),
     )
 
-    if not config.enable_assistant:
-        st.info("L'assistant IA est désactivé (`ENABLE_ASSISTANT=false` dans `.env`).")
+    if not get_setting("enable_assistant"):
+        st.info(t("assistant.disabled"))
         return
 
     st.markdown(f"""
     <div class="disclaimer" style="margin-bottom:16px;">
         {render_icon("alert-triangle", size=15)}
-        Cet assistant explique le projet et sa documentation. Il ne fournit
-        <b>jamais</b> de diagnostic, de traitement, de prescription ou d'avis médical
-        personnel — pour toute question de santé, consultez un professionnel.
+        {t("assistant.disclaimer")}
     </div>
     """, unsafe_allow_html=True)
 
@@ -58,7 +55,7 @@ def render() -> None:
     # qu'une seule notion de "conserver des donnees en local ou non". Si
     # desactive, on retombe sur l'ancien comportement (session_state
     # seulement, perdu au rechargement de page).
-    persist_chat = config.enable_history
+    persist_chat = get_setting("enable_history")
     if persist_chat:
         from persistence import get_store
         store = get_store()
@@ -75,26 +72,28 @@ def render() -> None:
         if persist_chat:
             store.add_assistant_message(role, content, sources=sources)
 
-    # Etat du serveur Ollama, verifie une fois par session (pas a chaque rerun)
-    if "ollama_reachable" not in st.session_state:
+    # Etat du serveur Ollama, verifie une fois par (url, modele) — pas juste une
+    # fois par session — pour qu'un changement dans Parametres declenche une
+    # nouvelle verification plutot que de garder le resultat de l'ancienne
+    # configuration. Meme convention de cle que celle que Parametres invalide
+    # deja lui-meme au moment de la sauvegarde (voir views/settings.py).
+    ollama_base_url = get_setting("ollama_base_url")
+    ollama_model = get_setting("ollama_model")
+    reachable_key = f"ollama_reachable::{ollama_base_url}::{ollama_model}"
+    if reachable_key not in st.session_state:
         try:
             from assistant.providers.ollama_provider import OllamaProvider
-            probe = OllamaProvider(base_url=config.ollama_base_url, model=config.ollama_model)
-            st.session_state.ollama_reachable = probe.is_reachable()
+            probe = OllamaProvider(base_url=ollama_base_url, model=ollama_model)
+            st.session_state[reachable_key] = probe.is_reachable()
         except Exception:
-            st.session_state.ollama_reachable = False
+            st.session_state[reachable_key] = False
 
-    if not st.session_state.ollama_reachable:
-        st.warning(
-            f"⚠️ Serveur Ollama non détecté sur `{config.ollama_base_url}`. "
-            f"L'assistant répondra avec un message d'erreur tant qu'Ollama "
-            f"n'est pas lancé (`ollama serve`) avec le modèle `{config.ollama_model}` "
-            f"téléchargé (`ollama pull {config.ollama_model}`)."
-        )
+    if not st.session_state[reachable_key]:
+        st.warning(t("assistant.unavailable", base_url=ollama_base_url, model=ollama_model))
 
     # Questions suggerees (uniquement avant le premier message)
     if not st.session_state.assistant_history:
-        st.markdown("<p style='font-size:13px; color:var(--text-muted);'>Suggestions :</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size:13px; color:var(--text-muted);'>{t('assistant.suggestions')}</p>", unsafe_allow_html=True)
         suggestions = SUGGESTED_QUESTIONS.get(language, SUGGESTED_QUESTIONS["fr"])
         cols = st.columns(len(suggestions))
         for col, question in zip(cols, suggestions):
@@ -114,26 +113,29 @@ def render() -> None:
 
     # Si le dernier message est de l'utilisateur sans reponse, la generer maintenant
     if st.session_state.assistant_history and st.session_state.assistant_history[-1]["role"] == "user":
-        with st.spinner("Réflexion..."):
-            result = ask(st.session_state.assistant_history[-1]["content"], language=language)
+        with st.spinner(t("assistant.thinking")):
+            result = ask(
+                st.session_state.assistant_history[-1]["content"], language=language,
+                llm_provider=get_setting("llm_provider"),
+                ollama_base_url=ollama_base_url, ollama_model=ollama_model,
+            )
         
         # ✅ Stockage et affichage avec sources
         sources = result.sources if (result.sources and not result.refused) else None
         _append("assistant", result.text, sources=sources)
         assistant_message(result.text, sources=sources)
 
-    user_input = st.chat_input("Posez votre question...")
+    user_input = st.chat_input(t("assistant.input_placeholder"))
     if user_input:
         _append("user", user_input)
         st.rerun()
 
     if st.session_state.assistant_history:
-        # ✅ CORRECTION : utilisation de icon= avec une icône Material au lieu de render_icon() dans le label
         if st.button(
-            "Effacer la conversation",
-            icon=":material/delete:",
-            help="Supprime l'historique de cette conversation (ne supprime rien dans l'Historique des analyses)"
-        ):
+                    t("assistant.clear"),
+                    icon=":material/delete:",
+                    help=t("assistant.clear_help")
+                ):
             st.session_state.assistant_history = []
             if persist_chat:
                 store.clear_assistant_conversation()

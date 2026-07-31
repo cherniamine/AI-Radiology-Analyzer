@@ -36,7 +36,7 @@ from translator import t, get_language, set_language, is_rtl, SUPPORTED_LANGUAGE
 from views import analysis, dashboard, reports, history, assistant, settings, about
 
 st.set_page_config(
-    page_title=config.app_title,
+    page_title=t("common.app_title"),
     page_icon="🫁",
     layout="wide",
     initial_sidebar_state="expanded",

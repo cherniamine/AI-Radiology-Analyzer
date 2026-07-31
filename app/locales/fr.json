@@ -21,8 +21,6 @@
     "overview_title": "Vue d'ensemble",
     "overview_text": "Ce projet classe des radiographies pulmonaires en quatre catégories (COVID-19, opacité pulmonaire, pneumonie virale, normal) à l'aide d'un réseau de neurones convolutif, avec cartes d'attention Grad-CAM pour l'explicabilité et génération automatique de rapports structurés.",
     "accuracy_label": "Exactitude (test)",
-    "roadmap_done_label": "Terminé",
-    "roadmap_pending_label": "En cours",
     "training_images_label": "Images d'entraînement",
     "classes_label": "Classes",
     "architecture_title": "Architecture",
@@ -34,14 +32,20 @@
       "Jeu de données déséquilibré et non validé cliniquement par un radiologue."
     ],
     "roadmap_title": "Feuille de route",
-    "roadmap_done": "✅ Architecture documentée · ✅ Validation des entrées · ✅ Rapport IA (PDF/JSON) · ✅ Grad-CAM comparatif · ✅ Docker · ✅ CI/CD · ✅ Navigation multi-pages · ✅ Persistance (Historique, Dashboard)",
-    "roadmap_pending": "🚧 Internationalisation complète (en/fr/ar) · 🚧 Assistant IA (RAG + Ollama) · 🚧 Paramètres éditables",
+    "roadmap_done": "✅ Architecture documentée · ✅ Validation des entrées · ✅ Rapport IA (PDF/JSON) · ✅ Grad-CAM comparatif · ✅ Docker · ✅ CI/CD · ✅ Navigation multi-pages · ✅ Persistance (Historique, Dashboard) · ✅ Internationalisation complète (en/fr/ar) · ✅ Paramètres éditables",
+    "roadmap_pending": "🚧 Assistant IA (RAG + Ollama) — non testé de bout en bout avec un vrai serveur Ollama",
     "footer_built_with": "Construit avec TensorFlow, Streamlit, Plotly et ReportLab."
   },
   "settings": {
     "title": "Paramètres",
-    "subtitle": "Configuration actuelle de l'application (lecture seule pour l'instant).",
-    "edit_badge": "🚧 Édition pas encore implémentée (Phase 6)",
+    "subtitle": "Configuration de l'application — modifiable pour la session en cours.",
+    "edit_badge": "Modifications en session (non écrites sur disque)",
+    "sections": {
+      "general": "Général",
+      "analysis": "Analyse",
+      "features": "Fonctionnalités",
+      "assistant": "Assistant IA"
+    },
     "rows": {
       "default_language": "Langue par défaut",
       "default_theme": "Thème par défaut",
@@ -54,6 +58,234 @@
       "llm_provider": "Fournisseur LLM (assistant)",
       "ollama_model": "Modèle Ollama"
     },
-    "note": "Ces valeurs viennent de `.env` (voir `.env.example`) ou de leurs valeurs par défaut dans `app/config.py`."
+    "help": {
+      "gradcam_alpha": "Valeur par défaut du curseur d'intensité Grad-CAM sur la page Analyse",
+      "max_upload": "Taille maximale acceptée par fichier uploadé, en mégaoctets",
+      "llm_provider": "Seul « ollama » (local, sans API payante) est disponible pour l'instant",
+      "ollama_base_url": "Adresse du serveur Ollama local (ex : http://localhost:11434)",
+      "ollama_model": "Nom du modèle Ollama à utiliser (doit avoir été téléchargé via `ollama pull`)",
+      "reset_button": "Revenir aux valeurs de .env pour tous les réglages ci-dessus"
+    },
+    "note": "Ces valeurs partent de `.env` (voir `.env.example`) ou de leurs valeurs par défaut dans `app/config.py`. Toute modification ci-dessus n'est valable que pour cette session du navigateur — un redémarrage de l'application repart de `.env`.",
+    "language_theme_note": "Langue et thème se règlent depuis la barre latérale, pas ici.",
+    "overridden_badge": "modifié",
+    "reset_button": "↩️ Réinitialiser aux valeurs de .env",
+    "reset_success": "Réglages réinitialisés aux valeurs de .env."
+  },
+  "classes": {
+    "covid": {
+      "label": "COVID-19",
+      "description": "Infection à SARS-CoV-2"
+    },
+    "lung_opacity": {
+      "label": "Opacité pulmonaire",
+      "description": "Anomalie interstitielle ou alvéolaire"
+    },
+    "normal": {
+      "label": "Normal",
+      "description": "Radiographie normale"
+    },
+    "viral_pneumonia": {
+      "label": "Pneumonie virale",
+      "description": "Infection virale pulmonaire"
+    }
+  },
+  "assistant": {
+    "title": "Assistant IA",
+    "subtitle": "Posez des questions sur le projet, le modèle, Grad-CAM, la confiance ou Docker.",
+    "disabled": "L'assistant IA est désactivé. Activez-le dans Paramètres ou via ENABLE_ASSISTANT.",
+    "disclaimer": "Cet assistant explique le projet et sa documentation. Il ne fournit jamais de diagnostic, traitement, prescription ou avis médical personnel. Pour toute question de santé, consultez un professionnel.",
+    "unavailable": "Serveur Ollama non détecté sur {base_url}. Lancez `ollama serve` et téléchargez le modèle `{model}` avec `ollama pull {model}`.",
+    "suggestions": "Suggestions :",
+    "thinking": "Réflexion…",
+    "input_placeholder": "Posez votre question…",
+    "clear": "Effacer la conversation",
+    "clear_help": "Supprime l'historique de cette conversation, sans supprimer l'historique des analyses."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Vue d'ensemble des analyses effectuées dans cette application",
+    "empty_title": "Aucune analyse enregistrée pour l'instant",
+    "empty_text": "Les statistiques apparaîtront ici après votre première analyse. Rendez-vous dans <b>🔬 Nouvelle analyse</b> pour commencer.",
+    "total_analyses": "Analyses totales",
+    "avg_confidence": "Confiance moyenne",
+    "avg_inference_time": "Temps d'inférence moyen",
+    "class_distribution": "Répartition par classe",
+    "timeline": "Analyses dans le temps",
+    "timeline_x": "Date",
+    "timeline_y": "Analyses",
+    "timeline_insufficient": "Pas assez de données pour une évolution temporelle.",
+    "caption": "Basé sur {total} analyse(s) réellement enregistrée(s) — aucune donnée simulée. Désactivable via ENABLE_HISTORY dans .env."
+  },
+  "history": {
+    "title": "Historique",
+    "subtitle": "Analyses passées — recherche, filtres, export, suppression",
+    "empty_title": "Aucune analyse enregistrée",
+    "empty_text": "Les analyses effectuées dans <b>🔬 Nouvelle analyse</b> apparaîtront ici.",
+    "search_label": "Rechercher par nom de fichier",
+    "search_placeholder": "ex: scan_001.png",
+    "filter_by_class": "Filtrer par classe",
+    "all_classes": "Toutes les classes",
+    "results_count": "{count} résultat(s)",
+    "no_results": "Aucune analyse ne correspond à ces filtres.",
+    "details_export": "Détails et export",
+    "findings": "Observations",
+    "impression": "Impression",
+    "recommendation": "Recommandation",
+    "download_json": "JSON",
+    "download_json_help": "Rapport structuré de cette analyse (sans les images)",
+    "download_pdf": "PDF",
+    "download_pdf_help": "PDF régénéré à partir des images enregistrées (aucune ré-analyse)",
+    "pdf_unavailable": "PDF indisponible",
+    "pdf_unavailable_help": "Images non enregistrées pour cette analyse (historique désactivé au moment de l'analyse)",
+    "delete": "Supprimer",
+    "delete_help": "Suppression définitive de cette analyse de l'historique"
+  },
+  "reports": {
+    "title": "Rapports",
+    "subtitle": "Aperçu inline d'un rapport déjà enregistré — copie et impression",
+    "empty_title": "Aucun rapport disponible",
+    "empty_text": "Les analyses effectuées dans <b>🔬 Nouvelle analyse</b> apparaîtront ici pour aperçu.",
+    "select_label": "Choisir une analyse à prévisualiser",
+    "analyzed_on": "Analysé le {date}",
+    "confidence": "Confiance {value}%",
+    "tab_json": "Aperçu JSON",
+    "tab_pdf": "Aperçu PDF",
+    "json_tree_label": "Arborescence interactive :",
+    "json_copy_label": "Texte copiable (icône en haut à droite du bloc) :",
+    "pdf_unavailable": "Aperçu PDF indisponible : images non enregistrées pour cette analyse (historique désactivé au moment de l'analyse) ou export PDF désactivé.",
+    "print_button": "Imprimer cette page",
+    "print_caption": "Ouvre la boîte de dialogue d'impression de votre navigateur pour la page actuelle. Pour n'imprimer que le rapport, utilisez plutôt le bouton de téléchargement PDF ci-dessous puis imprimez le fichier.",
+    "iframe_caption": "⚠️ L'aperçu inline nécessite un lecteur PDF intégré au navigateur (fonctionne sur la plupart des navigateurs de bureau ; peut être indisponible sur certains navigateurs mobiles).",
+    "download_pdf": "Télécharger ce PDF",
+    "download_pdf_help": "Télécharger le fichier pour l'imprimer ou l'archiver séparément"
+  },
+  "analysis": {
+    "header": {
+      "subtitle": "Classification de radiographies pulmonaires assistée par IA avec visualisation Grad-CAM",
+      "badge_search": "Recherche",
+      "badge_classes": "4 classes"
+    },
+    "readout": {
+      "model": "Modèle",
+      "resolution": "Résolution",
+      "accuracy": "Exactitude",
+      "training_images": "Images entraînement"
+    },
+    "sidebar": {
+      "classes_detected": "Classes détectées",
+      "gradcam_section": "Visualisation Grad-CAM",
+      "intensity_label": "Intensité",
+      "intensity_help": "Opacité de la superposition Grad-CAM",
+      "palette_label": "Palette",
+      "palette_help": "Palette de couleurs utilisée pour dessiner la carte Grad-CAM",
+      "perf_by_class": "Performance par classe",
+      "disclaimer_title": "Prototype académique",
+      "disclaimer_text": "Les prédictions n'ont pas de valeur diagnostique et ne remplacent pas l'avis d'un radiologue ou d'un médecin."
+    },
+    "upload": {
+      "title": "Charger des radiographies",
+      "description": "Déposez une ou plusieurs radiographies pulmonaires (PNG, JPG). Le modèle estime la classe la plus probable et génère une carte Grad-CAM des zones ayant influencé la décision.",
+      "selector_label": "Sélectionner des images"
+    },
+    "processing": {
+      "analyzing_title": "Analyse en cours",
+      "images_selected": "{count} image(s) sélectionnée(s)",
+      "in_progress_badge": "EN COURS",
+      "analyzing_file": "Analyse de {name}...",
+      "file_too_large": "Fichier trop volumineux ({size} Mo, maximum {max} Mo — réglable dans Paramètres).",
+      "rejected_size_status": "{name} — rejetée (taille)",
+      "rejected_size_inline": "Fichier trop volumineux ({size} Mo &gt; {max} Mo)",
+      "invalid_image": "Image non valide.",
+      "rejected_status": "{name} — rejetée",
+      "validation_failed": "Validation échouée ({ms} ms) : {reason}",
+      "validation_ok": "Validation & prétraitement ({ms} ms)",
+      "prediction_ok": "Prédiction CNN & Grad-CAM ({ms} ms)",
+      "heatmap_ok": "Carte de chaleur & export ZIP ({ms} ms)",
+      "report_ok": "Rapport IA généré ({ms} ms)",
+      "history_ok": "Enregistré dans l'historique ({ms} ms)",
+      "history_failed": "Analyse effectuée mais non enregistrée dans l'historique : {error}",
+      "file_error_status": "{name} — erreur",
+      "file_error": "Erreur avec {name} : {error}",
+      "rejected_count_title": "{count} image(s) écartée(s)",
+      "no_valid_analysis_title": "Aucune analyse valide",
+      "no_valid_analysis_text": "Aucune image exploitable n'a été trouvée. Vérifiez qu'il s'agit bien de radiographies en niveaux de gris, au format PNG/JPG."
+    },
+    "results": {
+      "title": "Résultats de l'analyse",
+      "processed_images": "Images traitées",
+      "avg_confidence": "Confiance moyenne",
+      "dominant_diagnosis": "Diagnostic dominant",
+      "covid_cases": "Cas COVID-19 ({percent}%)",
+      "viz_title": "Visualisation des résultats",
+      "class_distribution": "Distribution par classe",
+      "no_class_distribution": "Aucune donnée à afficher pour la distribution par classe.",
+      "confidence_distribution": "Distribution des scores de confiance",
+      "no_confidence_distribution": "Aucune donnée à afficher pour la distribution des confiances.",
+      "confidence_avg_annotation": "moyenne {value}%",
+      "confidence_axis": "Confiance (%)",
+      "images_axis": "Nombre d'images",
+      "per_class_title": "Détail par classe",
+      "detected_cases": "Cas détectés",
+      "avg_confidence_short": "Confiance moy."
+    },
+    "gradcam": {
+      "gallery_title": "Cartes Grad-CAM",
+      "interpretation_title": "Interprétation.",
+      "interpretation_text": "La heatmap met en évidence les régions de l'image ayant le plus influencé la prédiction du modèle. Elle ne constitue pas une segmentation de la lésion et ne doit pas être interprétée comme une localisation clinique exacte.",
+      "intensity_help_card": "Ajuste l'opacité de la fusion Grad-CAM pour cette image uniquement",
+      "caption_original": "Original",
+      "caption_gradcam": "Grad-CAM",
+      "caption_fusion": "Fusion",
+      "gauge_label": "Confiance",
+      "target_class": "Classe ciblée",
+      "confidence": "Confiance",
+      "target_layer": "Couche cible",
+      "layer_not_detected": "non détectée",
+      "method": "Méthode",
+      "download_original": "Original",
+      "download_heatmap": "Heatmap",
+      "download_fusion": "Fusion",
+      "report_expander": "Rapport IA détaillé",
+      "observations": "Observations",
+      "impression": "Impression",
+      "recommendation": "Recommandation",
+      "download_pdf": "Télécharger le rapport (PDF)",
+      "download_pdf_help": "Rapport complet pour cette image : original, Grad-CAM, fusion et observations"
+    },
+    "export": {
+      "title": "Exporter les résultats",
+      "zip_label": "Visualisations (ZIP)",
+      "zip_help": "Toutes les radiographies avec superposition Grad-CAM",
+      "csv_label": "Rapport CSV",
+      "csv_help": "Prédictions détaillées avec probabilités par classe",
+      "json_label": "Rapports JSON",
+      "json_help": "Rapports structurés pour chaque image",
+      "success_title": "Analyse terminée",
+      "success_text": "{count} radiographie(s) traitée(s) avec succès"
+    },
+    "home": {
+      "how_it_works_title": "Comment ça fonctionne",
+      "how_it_works_text": "Ce prototype classe des radiographies pulmonaires en quatre catégories à l'aide d'un réseau de neurones convolutif entraîné sur un jeu de données public de radiographies thoraciques. Pour chaque image, le modèle produit une probabilité par classe et une carte Grad-CAM localisant les régions ayant motivé sa prédiction.",
+      "step1": "Déposer une ou plusieurs radiographies (PNG/JPG)",
+      "step2": "Le modèle calcule les probabilités par classe",
+      "step3": "Une carte Grad-CAM localise les zones d'intérêt",
+      "step4": "Export du rapport (CSV) et des visualisations (ZIP)",
+      "measured_accuracy": "Exactitude mesurée",
+      "dataset_used": "{count} radiographies utilisées",
+      "features_title": "Fonctionnalités",
+      "feature1_title": "Classification 4 classes",
+      "feature1_desc": "COVID-19, opacité pulmonaire, pneumonie virale, ou normal, avec un score de confiance par classe.",
+      "feature2_title": "Explicabilité Grad-CAM",
+      "feature2_desc": "Cartes de chaleur superposées à la radiographie originale, pour visualiser les zones jugées pertinentes par le modèle.",
+      "feature3_title": "Rapports exportables",
+      "feature3_desc": "Export CSV des prédictions détaillées et ZIP des visualisations, pour analyse ou archivage."
+    },
+    "errors": {
+      "model_not_found": "Modèle introuvable : {path}",
+      "loading_model": "Chargement du modèle en cours...",
+      "model_load_error": "Erreur lors du chargement du modèle : {error}",
+      "layout_error": "Erreur de mise en page du graphique : {error}"
+    }
   }
 }
