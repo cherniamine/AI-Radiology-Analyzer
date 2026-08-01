@@ -3,9 +3,7 @@ views/analysis.py
 
 Page "Nouvelle analyse" : upload de radiographies, inference CNN, Grad-CAM,
 rapport IA et export (CSV/ZIP/PDF/JSON). C'est la fonctionnalite historique
-de l'application, migree ici telle quelle depuis l'ancien predict.py
-monolithique (Phase 1 de la refonte SaaS) : aucun comportement n'a change,
-seul l'emplacement du code a bouge.
+de l'application, qui a servi de base a toutes les autres pages (Dashboard, Historique, Assistant, Paramètres, À propos). Voir README.md pour un schema d'architecture globale.     
 """
 
 import base64
@@ -92,7 +90,7 @@ except ImportError:
             c = canvas.Canvas(buffer, pagesize=letter)
             width, height = letter
             c.setFont("Helvetica-Bold", 16)
-            c.drawString(50, height - 50, t('analysis.pdf.report_title') if 'analysis.pdf.report_title' in text else "Rapport d'analyse radiologique")
+            c.drawString(50, height - 50, "Rapport d'analyse radiologique")
             c.setFont("Helvetica", 11)
             y = height - 80
             c.drawString(50, y, f"Image: {report.to_dict().get('image_name', 'N/A')}")
@@ -145,52 +143,39 @@ def _md(html: str) -> str:
     return "\n".join(line.lstrip() for line in html.strip("\n").split("\n"))
 
 
-# ==============================================================
-def download_button_with_icon(icon_name, label, data, file_name, mime, help_text, key):
-    """Crée un bouton de téléchargement avec icône.
-    Le vrai st.download_button est masqué via CSS, seul le bouton stylé reste visible.
-    """
-    # Conteneur nommé pour cibler précisément le bouton natif
-    container = st.container(key=f"container_{key}")
-    with container:
-        # Bouton stylé + CSS pour masquer le vrai download_button
-        st.markdown(_md(f"""
-        <style>
-            /* Masque le vrai st.download_button à l'intérieur de ce conteneur */
-            .st-key-container_{key} div[data-testid="stDownloadButton"] {{
-                position: absolute;
-                width: 1px;
-                height: 1px;
-                overflow: hidden;
-                clip: rect(0,0,0,0);
-                border: 0;
-                padding: 0;
-                margin: -1px;
-            }}
-        </style>
-        <div style="display: flex; justify-content: center;">
-            <button onclick="document.getElementById('{key}').click()" style="
-                background: var(--accent-gradient); color: var(--on-accent); border: none;
-                border-radius: 8px; padding: 10px 24px; font-weight: 600; font-size: 14px;
-                cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
-                box-shadow: 0 2px 10px rgba(194,121,12,0.2); transition: all 0.2s;
-                width: 100%; justify-content: center;
-            ">
-                {render_icon(icon_name, size=14, color='var(--on-accent)')} {label}
-            </button>
-        </div>
-        """), unsafe_allow_html=True)
+# Mappe les noms d'icones "lucide" (utilises partout ailleurs avec
+# render_icon/icons.py) vers leur equivalent Material Symbols, seul format
+# accepte par le parametre natif `icon=` de st.download_button / st.button.
+_MATERIAL_ICON_MAP = {
+    'download': 'download',
+    'file-text': 'description',
+    'archive': 'archive',
+    'bar-chart-3': 'bar_chart',
+}
 
-        # Vrai bouton de téléchargement (masqué par le CSS ci-dessus)
-        st.download_button(
-            label="",
-            data=data,
-            file_name=file_name,
-            mime=mime,
-            help=help_text,
-            key=key,
-            width='stretch',
-        )
+
+def download_button_with_icon(icon_name, label, data, file_name, mime, help_text, key):
+    """Bouton de telechargement avec icone.
+
+    Corrige ici : la version precedente affichait l'icone via render_icon()
+    (SVG brut) dans une COLONNE SEPAREE a cote du bouton — l'icone flottait
+    donc visuellement a cote, jamais collee au bouton lui-meme (voir capture
+    d'ecran / historique de conversation). st.download_button accepte un
+    parametre `icon=` natif (format Material Symbols, ex. ":material/download:"),
+    rendu par Streamlit A L'INTERIEUR du bouton — meme convention deja
+    utilisee dans views/history.py (icon=":material/data_object:", etc.).
+    Plus besoin de colonnes ni de HTML additionnel."""
+    material_name = _MATERIAL_ICON_MAP.get(icon_name, "download")
+    st.download_button(
+        label=label,
+        data=data,
+        file_name=file_name,
+        mime=mime,
+        help=help_text,
+        key=key,
+        use_container_width=True,
+        icon=f":material/{material_name}:",
+    )
 
 
 # ==============================================================
@@ -636,7 +621,7 @@ def render() -> None:
 
         st.markdown(_md(f"""
         <div style='margin: 36px 0 16px 0;'>
-            <h2>{render_icon('chart-pie', size=16, color='var(--accent-primary)')} Ré{t('analysis.results.title')}</h2>
+            <h2>{render_icon('chart-pie', size=16, color='var(--accent-primary)')} {t('analysis.results.title')}</h2>
         </div>
         """), unsafe_allow_html=True)
 
@@ -755,7 +740,7 @@ def render() -> None:
         # Per-class breakdown
         st.markdown(_md(f"""
         <div style='margin: 32px 0 16px 0;'>
-            <h3>{render_icon('list', size=16)} Dé{t('analysis.results.per_class_title')}</h3>
+            <h3>{render_icon('list', size=16)} {t('analysis.results.per_class_title')}</h3>
         </div>
         """), unsafe_allow_html=True)
         class_cols = st.columns(4)
@@ -862,7 +847,7 @@ def render() -> None:
                     <div class="readout-value" style="font-size:13px; font-weight:400; color:var(--text-secondary);">{target_layer_display}</div>
                 </div>
                 <div class="readout-item">
-                    <div class="readout-label">{render_icon('brain-circuit', size=13)} Mé{t('analysis.gradcam.method')}</div>
+                    <div class="readout-label">{render_icon('brain-circuit', size=13)} {t('analysis.gradcam.method')}</div>
                     <div class="readout-value" style="font-size:14px;">Grad-CAM</div>
                 </div>
             </div>
@@ -879,10 +864,10 @@ def render() -> None:
                     download_button_with_icon(
                         'download',
                         t('analysis.gradcam.download_original'),
-                        base64.b64encode(buf).decode(),
+                        buf.tobytes(),
                         f"{safe_name}_original.png",
                         "image/png",
-                        "Télé{t('analysis.gradcam.download_original_help')}",
+                        t('analysis.gradcam.download_original_help'),
                         f"dl_original_{img_idx}"
                     )
             
@@ -892,10 +877,10 @@ def render() -> None:
                     download_button_with_icon(
                         'download',
                         t('analysis.gradcam.download_heatmap'),
-                        base64.b64encode(buf).decode(),
+                        buf.tobytes(),
                         f"{safe_name}_gradcam.png",
                         "image/png",
-                        "Télé{t('analysis.gradcam.download_heatmap_help')}",
+                        t('analysis.gradcam.download_heatmap_help'),
                         f"dl_gradcam_{img_idx}"
                     )
             
@@ -908,7 +893,7 @@ def render() -> None:
                     pdf_bytes,
                     f"rapport_{safe_name}.pdf",
                     "application/pdf",
-                    "t('analysis.gradcam.download_pdf_help')",
+                    t('analysis.gradcam.download_pdf_help'),
                     f"pdf_dl_{img_idx}"
                 )
 
@@ -960,7 +945,7 @@ def render() -> None:
                 zip_buffer.getvalue(),
                 f"radiology_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
                 "application/zip",
-                "t('analysis.export.zip_help')",
+                t('analysis.export.zip_help'),
                 "zip_dl"
             )
     
@@ -973,7 +958,7 @@ def render() -> None:
                 csv_data.encode("utf-8-sig"),
                 f"radiology_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                 "text/csv",
-                "Prédictions détaillées avec probabilités par classe",
+                t('analysis.export.csv_help'),
                 "csv_dl"
             )
     
@@ -989,7 +974,7 @@ def render() -> None:
                 all_reports_json.encode("utf-8"),
                 f"radiology_reports_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
                 "application/json",
-                "Rapports structurés pour chaque image",
+                t('analysis.export.json_help'),
                 "json_dl"
             )
 
@@ -1030,7 +1015,7 @@ def render() -> None:
                 <div style="display:grid; gap:8px; margin-top:12px;">
                     <div style="display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--bg-input); border-radius:var(--radius-sm);">
                         <span style="font-size:18px; font-weight:700; color:var(--accent-primary); width: 28px; text-align: center;">1</span>
-                        <span style="color:var(--text-primary);">{render_icon('upload-cloud', size=14)} Dé{t('analysis.home.step1')}</span>
+                        <span style="color:var(--text-primary);">{render_icon('upload-cloud', size=14)} {t('analysis.home.step1')}</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--bg-input); border-radius:var(--radius-sm);">
                         <span style="font-size:18px; font-weight:700; color:var(--accent-primary); width: 28px; text-align: center;">2</span>

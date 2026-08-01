@@ -34,6 +34,8 @@
       "Jeu de données déséquilibré et non validé cliniquement par un radiologue."
     ],
     "roadmap_title": "Feuille de route",
+    "roadmap_done_label": "Terminé",
+    "roadmap_pending_label": "En cours",
     "roadmap_done": "✅ Architecture documentée · ✅ Validation des entrées · ✅ Rapport IA (PDF/JSON) · ✅ Grad-CAM comparatif · ✅ Docker · ✅ CI/CD · ✅ Navigation multi-pages · ✅ Persistance (Historique, Dashboard) · ✅ Internationalisation complète (en/fr/ar) · ✅ Paramètres éditables",
     "roadmap_pending": "🚧 Assistant IA (RAG + Ollama) — non testé de bout en bout avec un vrai serveur Ollama",
     "footer_built_with": "Construit avec TensorFlow, Streamlit, Plotly et ReportLab.",
@@ -256,6 +258,8 @@
       "observations": "Observations",
       "impression": "Impression",
       "recommendation": "Recommandation",
+      "download_original_help": "Télécharger l'image originale pour l'archiver ou la comparer",
+      "download_heatmap_help": "Télécharger la carte Grad-CAM pour cette image",
       "download_pdf": "Télécharger le rapport (PDF)",
       "download_pdf_help": "Rapport complet pour cette image : original, Grad-CAM, fusion et observations"
     },

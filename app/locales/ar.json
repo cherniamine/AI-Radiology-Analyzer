@@ -34,6 +34,8 @@
       "مجموعة بيانات غير متوازنة ولم يتم التحقق منها سريريًا من قبل طبيب أشعة."
     ],
     "roadmap_title": "خارطة الطريق",
+    "roadmap_done_label": "مكتمل",
+    "roadmap_pending_label": "قيد التقدم",
     "roadmap_done": "✅ بنية موثقة · ✅ التحقق من صحة المدخلات · ✅ تقرير ذكي (PDF/JSON) · ✅ مقارنة Grad-CAM · ✅ Docker · ✅ التكامل المستمر (CI/CD) · ✅ تنقل متعدد الصفحات · ✅ حفظ البيانات (السجل ولوحة التحكم) · ✅ دعم كامل لتعدد اللغات (إنجليزي/فرنسي/عربي) · ✅ إعدادات قابلة للتعديل",
     "roadmap_pending": "🚧 المساعد الذكي (RAG + Ollama) — لم يُختبر بعد من طرف إلى طرف مع خادم Ollama حقيقي",
     "footer_built_with": "تم البناء باستخدام TensorFlow وStreamlit وPlotly وReportLab.",
@@ -256,6 +258,8 @@
       "observations": "الملاحظات",
       "impression": "الانطباع",
       "recommendation": "التوصية",
+      "download_original_help": "تنزيل الصورة الأصلية للرجوع إليها أو الأرشفة",
+      "download_heatmap_help": "تنزيل خريطة Grad-CAM لهذه الصورة",
       "download_pdf": "تنزيل التقرير (PDF)",
       "download_pdf_help": "تقرير كامل لهذه الصورة: الأصلية وGrad-CAM والدمج والملاحظات"
     },

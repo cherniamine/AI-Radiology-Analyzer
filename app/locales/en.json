@@ -34,6 +34,8 @@
       "Imbalanced dataset, not clinically validated by a radiologist."
     ],
     "roadmap_title": "Roadmap",
+    "roadmap_done_label": "Completed",
+    "roadmap_pending_label": "In progress",
     "roadmap_done": "✅ Documented architecture · ✅ Input validation · ✅ AI report (PDF/JSON) · ✅ Comparative Grad-CAM · ✅ Docker · ✅ CI/CD · ✅ Multi-page navigation · ✅ Persistence (History, Dashboard) · ✅ Full internationalization (en/fr/ar) · ✅ Editable settings",
     "roadmap_pending": "🚧 AI Assistant (RAG + Ollama) — not tested end-to-end with a real Ollama server",
     "footer_built_with": "Built with TensorFlow, Streamlit, Plotly and ReportLab.",
@@ -256,6 +258,8 @@
       "observations": "Findings",
       "impression": "Impression",
       "recommendation": "Recommendation",
+      "download_original_help": "Download the original image for reference or archival",
+      "download_heatmap_help": "Download the Grad-CAM heatmap for this image",
       "download_pdf": "Download report (PDF)",
       "download_pdf_help": "Full report for this image: original, Grad-CAM, overlay and findings"
     },

@@ -10,18 +10,40 @@ enregistre, sans telechargement necessaire.
 - Apercu PDF inline, integre en base64 dans un <iframe> (technique standard
   cote navigateur — necessite un lecteur PDF natif dans le navigateur ;
   non garanti sur tous les navigateurs mobiles, voir avertissement affiche).
-- Impression directe : bouton qui declenche window.print() du navigateur
-  (aucune bibliotheque externe), imprime la page actuelle.
+- Impression directe : bouton Streamlit natif qui declenche window.print()
+  cote client via une micro-injection JS (voir _trigger_print plus bas).
 
 Reutilise persistence.HistoryStore et report_generator.build_report /
 generate_pdf_report — aucune logique dupliquee avec history.py ou
 analysis.py.
+
+BUG CORRIGE ICI (erreur React #231 dans la console navigateur) : le bouton
+d'impression etait auparavant du HTML ecrit a la main avec un attribut
+onclick="window.print()", envoye via st.markdown(unsafe_allow_html=True).
+Streamlit rend ce markdown avec react-markdown (+ rehype-raw), qui NE FAIT
+PAS de l'injection DOM brute : il convertit chaque attribut HTML en prop
+React. L'attribut "onclick" devient donc la prop React "onClick", mais avec
+pour valeur la CHAINE "window.print()" plutot qu'une vraie fonction — React
+attend imperativement une fonction pour onClick et leve l'invariant #231
+("Event handler property `onClick` was expected to be a function, instead
+got a string"). C'est pour ca que ce comportement n'affecte QUE ce bouton
+(seul endroit du fichier avec un onclick en HTML brut) et aucun autre.
+
+Correctif : un vrai st.button() (deja stylise comme les autres boutons de
+l'app via le CSS global de theme.py, aucun HTML/CSS a la main necessaire),
+qui declenche cote Python un composants.v1.html() minuscule (hauteur 0,
+invisible) executant `window.parent.print()` dans un vrai DOM isole
+(iframe), donc jamais interprete comme du JSX — aucun risque de rencontrer
+a nouveau l'invariant #231. window.parent (et non window) est utilise car
+le script s'execute dans l'iframe de ce composant : parent designe la page
+Streamlit elle-meme, celle qu'on veut reellement imprimer.
 """
 
 import base64
 import json
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from config import CLASS_NAMES, class_color
 from translator import get_language, t
@@ -52,16 +74,15 @@ def _json_payload(record, language: str) -> dict:
     return payload
 
 
-def _print_button_html() -> str:
-    return f"""
-    <button onclick="window.print()" style="
-        background: var(--accent-gradient); color: var(--on-accent); border: none;
-        border-radius: var(--radius-sm); padding: 10px 20px; font-size: 14px;
-        font-weight: 600; cursor: pointer; transition: var(--transition);
-        display: inline-flex; align-items: center; gap: 8px;
-        box-shadow: 0 2px 10px rgba(194, 121, 12, 0.25);
-    ">{render_icon('printer', size=16, color='var(--on-accent)')} {t('reports.print_button')}</button>
-    """
+def _trigger_print() -> None:
+    """Declenche window.print() cote client, depuis un vrai DOM isole (iframe
+    via components.html) plutot que via un onclick="..." dans du HTML passe a
+    st.markdown — voir le commentaire du module pour l'erreur React #231 que
+    ce contournement evite. hauteur=0 : ce composant n'affiche rien, il ne
+    sert qu'a executer le script une fois, au moment du clic Python cote
+    serveur (l'appel est place dans le meme `if st.button(...):`, donc ne
+    s'execute que sur le rerun declenche par ce clic precis)."""
+    components.html("<script>window.parent.print();</script>", height=0, width=0)
 
 
 def render() -> None:
@@ -140,7 +161,8 @@ def render() -> None:
             )
             base64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
 
-            st.markdown(_print_button_html(), unsafe_allow_html=True)
+            if st.button(t("reports.print_button"), icon=":material/print:", key="print_report_btn"):
+                _trigger_print()
             st.markdown(
                 f"{render_icon('info', size=12)} *{t('reports.print_caption')}*",
                 unsafe_allow_html=True
@@ -164,4 +186,5 @@ def render() -> None:
                 mime="application/pdf",
                 help=t("reports.download_pdf_help"),
                 width='stretch',
+                icon=":material/picture_as_pdf:",
             )

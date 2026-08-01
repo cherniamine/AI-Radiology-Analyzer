@@ -16,11 +16,8 @@ from icons import icon as render_icon
 
 
 def _split_roadmap_items(raw: str, marker: str) -> list[str]:
-    """Découpe une chaîne de roadmap (ex. "✅ A · ✅ B") en items nettoyés,
-    sans le marqueur emoji ni les espaces superflus — le marqueur est
-    redessiné via une icône SVG (voir plus bas), pour rester cohérent avec
-    le reste du design system plutôt que de garder l'emoji tel quel."""
-    items = []
+    """Break a roadmap string into clean list items without the leading emoji marker."""
+    items: list[str] = []
     for part in raw.split("·"):
         cleaned = part.strip()
         if cleaned.startswith(marker):
@@ -44,8 +41,10 @@ def render() -> None:
     accuracy = f"{metrics['accuracy'] * 100:.1f}%" if metrics else "N/A"
     dataset_display = f"{DATASET_SIZE:,}".replace(",", "\u2009")
 
-    glass_card(f"<h3>{render_icon('info', size=18)} {t('about.overview_title')}</h3>"
-               f"<p style='font-size:14px; line-height:1.7;'>{t('about.overview_text')}</p>")
+    glass_card(
+        f"<h3>{render_icon('info', size=18)} {t('about.overview_title')}</h3>"
+        f"<p style='font-size:14px; line-height:1.7;'>{t('about.overview_text')}</p>"
+    )
 
     st.markdown("<div style='height:14px;'></div>", unsafe_allow_html=True)
     stat_cols = st.columns(3)
@@ -60,25 +59,34 @@ def render() -> None:
     glass_card(f"""
     <h3>{render_icon('workflow', size=18)} {t('about.architecture_title')}</h3>
     <p style="font-size:13.5px; line-height:1.8;">
-    <b>app/predict.py</b> — point d'entrée, navigation multi-pages<br>
-    <b>app/config.py</b> — configuration centralisée (.env)<br>
-    <b>app/theme.py</b> — design system partagé<br>
+    <b>app/predict.py</b> — point d'entrée, navigation multi-pages et état global<br>
+    <b>app/config.py</b> — configuration centralisée (.env, langue, thème, export, assistant)<br>
+    <b>app/theme.py</b> — design system partagé et styles visuels cohérents<br>
     <b>app/components.py</b> — bibliothèque de composants UI réutilisables<br>
-    <b>app/icons.py</b> — jeu d'icônes SVG autonome (style Lucide/Feather)<br>
-    <b>app/translator.py</b> — internationalisation (fr/en/ar)<br>
-    <b>app/persistence.py</b> — historique des analyses (SQLite)<br>
-    <b>app/assistant/</b> — assistant IA (RAG local + Ollama)<br>
+    <b>app/icons.py</b> — bibliothèque d'icônes SVG<br>
+    <b>app/translator.py</b> — internationalisation (fr/en/ar) avec fallback<br>
+    <b>app/persistence.py</b> — historique des analyses (SQLite) et cache local<br>
+    <b>app/assistant/</b> — assistant IA local (RAG + Ollama)<br>
     <b>app/views/</b> — une page par fonctionnalité (Dashboard, Analyse, Rapports, Historique, Assistant, Paramètres, À propos)<br>
-    <b>app/image_utils.py</b> — validation d'image, prétraitement, Grad-CAM (post-traitement)<br>
-    <b>app/report_generator.py</b> — génération du rapport structuré + export PDF/JSON<br>
-    <b>src/</b> — entraînement et évaluation du modèle (hors application)
+    <b>app/image_utils.py</b> — validation d'image, prétraitement et overlays Grad-CAM<br>
+    <b>app/report_generator.py</b> — génération du rapport structuré et export PDF/JSON<br>
+    <b>src/</b> — entraînement et évaluation du modèle hors application
     </p>
     """)
 
     tech_badges = "".join(
         f'<span class="badge badge-info">{render_icon("cpu", size=10)} {name}</span>'
-        for name in ["TensorFlow / Keras", "Streamlit", "OpenCV", "Plotly", "ReportLab",
-                     "SQLite", "Ollama", "Docker", "GitHub Actions"]
+        for name in [
+            "TensorFlow / Keras",
+            "Streamlit",
+            "OpenCV",
+            "Plotly",
+            "ReportLab",
+            "SQLite",
+            "Ollama",
+            "Docker",
+            "GitHub Actions",
+        ]
     )
     glass_card(f"""
     <h3>{render_icon('layers', size=18)} {t('about.technologies_title')}</h3>
@@ -91,16 +99,10 @@ def render() -> None:
     <ul style="font-size:13.5px; line-height:1.8; padding-left:20px; list-style:none;">{limitations_html}</ul>
     """)
 
-    # ==============================================================
-    # ROADMAP — version traduite dynamiquement
-    # ==============================================================
     done_items = _split_roadmap_items(t("about.roadmap_done"), "✅")
     pending_items = _split_roadmap_items(t("about.roadmap_pending"), "🚧")
-
-    # Ajouter les labels "Terminé" / "En cours" traduits
-    # Ces clés doivent être ajoutées dans les fichiers de langue
-    done_label = t("about.roadmap_done_label") if "about.roadmap_done_label" in t("about") else "Terminé"
-    pending_label = t("about.roadmap_pending_label") if "about.roadmap_pending_label" in t("about") else "En cours"
+    done_label = t("about.roadmap_done_label")
+    pending_label = t("about.roadmap_pending_label")
 
     done_html = "".join(
         f'<div style="display:flex; align-items:center; gap:8px; color:var(--success-text);">'
@@ -132,8 +134,8 @@ def render() -> None:
     """)
 
     footer(
-        config.app_title, 
-        config.app_version, 
+        config.app_title,
+        config.app_version,
         "MIT",
         ["TensorFlow", "Streamlit", "Plotly", "ReportLab", "Ollama"],
         built_with_text=t("about.footer_built_with"),
