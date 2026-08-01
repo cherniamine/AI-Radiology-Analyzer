@@ -1,32 +1,5 @@
-"""
-predict.py
-
-Point d'entree de l'application Streamlit.
-
-Le nom du fichier (predict.py) est impose par le Dockerfile
-(`ENTRYPOINT ["streamlit", "run", "app/predict.py", ...]`) et par toute
-commande de lancement existante — ne pas le renommer sans mettre a jour
-Dockerfile et docker-compose.yml en consequence.
-
-Ce fichier ne contient plus la logique metier (elle vit dans app/views/,
-une page = un module avec une fonction render()). Il se contente de :
-  1. Configurer la page (une seule fois, ici — pas dans chaque vue).
-  2. Proposer le selecteur de langue et le bouton clair/sombre (globaux,
-     persistes via l'URL ?lang= et la session).
-  3. Injecter le design system partage (theme.py), avec support RTL et
-     mode sombre.
-  4. Declarer la navigation multi-pages et dispatcher vers la page choisie.
-
-Streamlit ré-exécute ce script a chaque interaction ; le chargement du
-modele (couteux) est isole dans app/views/analysis.py et protege par
-@st.cache_resource, donc il ne s'execute reellement qu'une fois et
-uniquement quand la page Analyse est visitee.
-
-Etat de l'i18n (voir README, section Pistes d'amelioration) : seules la
-navigation, la page About et la page Settings sont entierement traduites
-aujourd'hui. Les autres pages restent en francais tant qu'elles n'ont pas
-ete migrees vers translator.t().
-"""
+"""Entrée Streamlit de l'application. Configure le thème, la langue et la
+navigation multi-pages."""
 
 import streamlit as st
 
@@ -50,14 +23,14 @@ if "_dark_mode" not in st.session_state:
 inject_theme(rtl=is_rtl(), dark=st.session_state._dark_mode)
 
 with st.sidebar:
-    st.markdown("""
+    st.markdown(f"""
     <div class="sidebar-header">
         <div class="brand-mark">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/></svg>
         </div>
         <div class="brand-text">
-            <h3>AI Radiology</h3>
-            <p>Suite d'assistance diagnostique</p>
+            <h3>{t('common.app_title')}</h3>
+            <p>{t('common.app_subtitle')}</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -65,12 +38,13 @@ with st.sidebar:
     top_cols = st.columns([5, 1])
     with top_cols[0]:
         lang_codes = list(SUPPORTED_LANGUAGES.keys())
+        selector_key = f"_lang_selector_{current_lang}"
         selected = st.selectbox(
             t("common.language_selector_label"),
             options=lang_codes,
             index=lang_codes.index(current_lang),
             format_func=lambda code: f"{SUPPORTED_LANGUAGES[code]['flag']} {SUPPORTED_LANGUAGES[code]['label']}",
-            key="_lang_selector",
+            key=selector_key,
             label_visibility="collapsed",
         )
         if selected != current_lang:
@@ -78,7 +52,7 @@ with st.sidebar:
             st.rerun()
     with top_cols[1]:
         theme_icon = "☀️" if st.session_state._dark_mode else "🌙"
-        if st.button("", icon=theme_icon, key="_theme_toggle", help="Changer de thème"):
+        if st.button("", icon=theme_icon, key="_theme_toggle", help=t("common.theme_toggle_help")):
             st.session_state._dark_mode = not st.session_state._dark_mode
             st.rerun()
 

@@ -10,12 +10,13 @@ import json
 
 import streamlit as st
 
-from config import CLASS_NAMES, class_color, config
+from config import CLASS_NAMES, class_color
 from translator import get_language, t
 from persistence import get_store
 from report_generator import build_report, generate_pdf_report
 from components import section_title, empty_state
 from icons import icon as render_icon
+from settings_store import get_setting
 
 
 def _json_payload(record, language: str) -> dict:
@@ -116,12 +117,12 @@ def render() -> None:
                         help=t("history.download_json_help"),
                         key=f"json_{record.id}",
                         width='stretch',
-                        disabled=not config.enable_json_export,
+                        disabled=not get_setting("enable_json_export"),
                         icon=":material/data_object:",
                     )
                     
                 with action_cols[1]:
-                    if record.has_images() and config.enable_pdf_export:
+                    if record.has_images() and get_setting("enable_pdf_export"):
                         report = build_report(
                             image_name=record.image_name,
                             predicted_class=record.predicted_class,

@@ -23,8 +23,9 @@ from __future__ import annotations
 from typing import Dict, List, Optional
 
 import streamlit as st
-import os  
+import os
 from icons import icon as render_icon
+from translator import t
 
 # ==============================================================
 # SectionTitle — en-tete de page (remplace le bloc "main-header" duplique
@@ -127,7 +128,9 @@ def confidence_color(value_percent: float) -> str:
 _confidence_color = confidence_color
 
 
-def _build_confidence_gauge_html(value_percent: float, label: str = "Confiance", size: int = 140) -> str:
+def _build_confidence_gauge_html(value_percent: float, label: Optional[str] = None, size: int = 140) -> str:
+    if label is None:
+        label = t("analysis.gradcam.confidence")
     value_percent = max(0.0, min(100.0, value_percent))
     radius = size / 2 - 10
     circumference = 2 * 3.14159265 * radius
@@ -154,7 +157,7 @@ def _build_confidence_gauge_html(value_percent: float, label: str = "Confiance",
     """
 
 
-def confidence_gauge(value_percent: float, label: str = "Confiance", size: int = 140) -> None:
+def confidence_gauge(value_percent: float, label: Optional[str] = None, size: int = 140) -> None:
     st.markdown(_build_confidence_gauge_html(value_percent, label, size), unsafe_allow_html=True)
 
 
@@ -251,7 +254,7 @@ def _build_assistant_message_html(text: str, sources: Optional[List[str]] = None
         )
         sources_html = (
             '<div style="margin-top:8px; padding-top:6px; border-top:1px solid var(--border-color);">'
-            f'<span style="font-size:11px; color:var(--text-muted);">{render_icon("paperclip", size=12)} Sources :</span>'
+            f'<span style="font-size:11px; color:var(--text-muted);">{render_icon("paperclip", size=12)} {t("assistant.sources")}</span>'
             f'<div style="margin-top:4px; display:flex; flex-wrap:wrap; gap:4px;">{source_items}</div>'
             '</div>'
         )
@@ -286,11 +289,11 @@ def _build_footer_html(
 ) -> str:
     """Construit le footer avec texte traduit possible."""
     if built_with_text is None:
-        tech_str = ", ".join(tech_list)
-        built_with_text = f"Construit avec {tech_str}."
+        built_with_text = t("about.footer_built_with")
+    meta_line = t("about.footer_meta", app_title=app_title, version=version, license=license_name)
     return f"""
     <div class="footer">
-        <p>{app_title} &middot; Version {version} &middot; Licence {license_name}</p>
+        <p>{meta_line}</p>
         <p style="font-size:11px;">{built_with_text}</p>
     </div>
     """

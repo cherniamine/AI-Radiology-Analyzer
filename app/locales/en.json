@@ -1,7 +1,9 @@
 {
   "common": {
     "app_title": "AI Radiology Analyzer",
+    "app_subtitle": "Diagnostic assistance suite",
     "language_selector_label": "Language",
+    "theme_toggle_help": "Change theme",
     "disclaimer_short": "Academic prototype — does not replace professional medical advice.",
     "nav": {
       "analysis": "New Analysis",
@@ -34,7 +36,8 @@
     "roadmap_title": "Roadmap",
     "roadmap_done": "✅ Documented architecture · ✅ Input validation · ✅ AI report (PDF/JSON) · ✅ Comparative Grad-CAM · ✅ Docker · ✅ CI/CD · ✅ Multi-page navigation · ✅ Persistence (History, Dashboard) · ✅ Full internationalization (en/fr/ar) · ✅ Editable settings",
     "roadmap_pending": "🚧 AI Assistant (RAG + Ollama) — not tested end-to-end with a real Ollama server",
-    "footer_built_with": "Built with TensorFlow, Streamlit, Plotly and ReportLab."
+    "footer_built_with": "Built with TensorFlow, Streamlit, Plotly and ReportLab.",
+    "footer_meta": "{app_title} · Version {version} · License {license}"
   },
   "settings": {
     "title": "Settings",
@@ -59,15 +62,17 @@
       "ollama_model": "Ollama model"
     },
     "help": {
+      "language_selector": "Application interface language — synchronized with the sidebar",
       "gradcam_alpha": "Default value of the Grad-CAM intensity slider on the Analysis page",
       "max_upload": "Maximum accepted size per uploaded file, in megabytes",
       "llm_provider": "Only \"ollama\" (local, no paid API) is available for now",
       "ollama_base_url": "Address of the local Ollama server (e.g. http://localhost:11434)",
       "ollama_model": "Name of the Ollama model to use (must have been downloaded via `ollama pull`)",
-      "reset_button": "Revert all settings above to their .env values"
+      "reset_button": "Revert all settings above to their .env values",
+      "theme_toggle": "Switch between light and dark theme — synchronized with the sidebar button"
     },
     "note": "These values start from `.env` (see `.env.example`) or their defaults in `app/config.py`. Any change above only applies to this browser session — restarting the application reverts to `.env`.",
-    "language_theme_note": "Language and theme are set from the sidebar, not here.",
+    "language_theme_note": "Language and theme are synchronized with the sidebar and can also be changed here.",
     "overridden_badge": "modified",
     "reset_button": "↩️ Reset to .env values",
     "reset_success": "Settings reset to .env values."
@@ -100,7 +105,8 @@
     "thinking": "Thinking…",
     "input_placeholder": "Ask your question…",
     "clear": "Clear conversation",
-    "clear_help": "Deletes this conversation history without deleting analysis history."
+    "clear_help": "Deletes this conversation history without deleting analysis history.",
+    "sources": "Sources:"
   },
   "dashboard": {
     "title": "Dashboard",

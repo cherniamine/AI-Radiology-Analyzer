@@ -23,12 +23,13 @@ import json
 
 import streamlit as st
 
-from config import CLASS_NAMES, class_color, config
+from config import CLASS_NAMES, class_color
 from translator import get_language, t
 from persistence import get_store
 from report_generator import build_report, generate_pdf_report
 from components import section_title, empty_state
 from icons import icon as render_icon
+from settings_store import get_setting
 
 
 def _json_payload(record, language: str) -> dict:
@@ -121,7 +122,7 @@ def render() -> None:
         # Ajouter l'icône à l'intérieur de l'onglet
         st.markdown(f"{render_icon('file-text', size=14)} **{t('reports.tab_pdf')}**", unsafe_allow_html=True)
 
-        if not (record.has_images() and config.enable_pdf_export):
+        if not (record.has_images() and get_setting("enable_pdf_export")):
             st.info(
                 f"{render_icon('alert-circle', size=16)} {t('reports.pdf_unavailable')}"
             )

@@ -1,4 +1,4 @@
-"""
+﻿"""
 views/analysis.py
 
 Page "Nouvelle analyse" : upload de radiographies, inference CNN, Grad-CAM,
@@ -26,7 +26,8 @@ import streamlit as st
 import tensorflow as tf , keras
 
 from config import config, CLASS_NAMES, CLASS_META, DATASET_SIZE, class_color, load_real_metrics
-from translator import get_language
+from settings_store import get_setting
+from translator import get_language, t
 from icons import icon as render_icon
 from components import confidence_gauge, probability_bars, confidence_color
 from image_utils import (
@@ -91,7 +92,7 @@ except ImportError:
             c = canvas.Canvas(buffer, pagesize=letter)
             width, height = letter
             c.setFont("Helvetica-Bold", 16)
-            c.drawString(50, height - 50, "Rapport d'analyse radiologique")
+            c.drawString(50, height - 50, t('analysis.pdf.report_title') if 'analysis.pdf.report_title' in text else "Rapport d'analyse radiologique")
             c.setFont("Helvetica", 11)
             y = height - 80
             c.drawString(50, y, f"Image: {report.to_dict().get('image_name', 'N/A')}")
@@ -337,13 +338,13 @@ def render() -> None:
     <div class="main-header fade-in">
         <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
             <div style="flex: 1;">
-                <h1>{render_icon('hospital', size=28, color='var(--accent-primary)')} AI Radiology Analyzer</h1>
-                <p class="subtitle">Classification de radiographies pulmonaires assistée par IA avec visualisation Grad-CAM</p>
+                <h1>{render_icon('hospital', size=28, color='var(--accent-primary)')} {t('common.app_title')}</h1>
+                <p class="subtitle">{t('analysis.header.subtitle')}</p>
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <span class="badge badge-info">{render_icon('search', size=14)} Recherche</span>
+                <span class="badge badge-info">{render_icon('search', size=14)} {t('analysis.header.badge_search')}</span>
                 <span class="badge badge-success">{render_icon('cpu', size=14)} CNN</span>
-                <span class="badge badge-warning">{render_icon('layers', size=14)} 4 classes</span>
+                <span class="badge badge-warning">{render_icon('layers', size=14)} {t('analysis.header.badge_classes')}</span>
             </div>
         </div>
     </div>
@@ -354,19 +355,19 @@ def render() -> None:
     st.markdown(_md(f"""
     <div class="readout-strip fade-in">
         <div class="readout-item">
-            <div class="readout-label">{render_icon('brain-circuit', size=13)} Modèle</div>
+            <div class="readout-label">{render_icon('brain-circuit', size=13)} {t('analysis.readout.model')}</div>
             <div class="readout-value">CNN • 4 classes</div>
         </div>
         <div class="readout-item">
-            <div class="readout-label">{render_icon('maximize', size=13)} Résolution</div>
+            <div class="readout-label">{render_icon('maximize', size=13)} {t('analysis.readout.resolution')}</div>
             <div class="readout-value">{IMG_SIZE[0]}×{IMG_SIZE[1]}</div>
         </div>
         <div class="readout-item">
-            <div class="readout-label">{render_icon('target', size=13)} Exactitude</div>
+            <div class="readout-label">{render_icon('target', size=13)} {t('analysis.readout.accuracy')}</div>
             <div class="readout-value" style="color: {confidence_color(OVERALL_ACCURACY) if OVERALL_ACCURACY else 'var(--danger-text)'};">{accuracy_display}</div>
         </div>
         <div class="readout-item">
-            <div class="readout-label">{render_icon('database', size=13)} Images entraînement</div>
+            <div class="readout-label">{render_icon('database', size=13)} {t('analysis.readout.training_images')}</div>
             <div class="readout-value">{DATASET_SIZE:,}</div>
         </div>
     </div>
@@ -376,7 +377,7 @@ def render() -> None:
     # SIDEBAR
     # ==============================================================
     with st.sidebar:
-        st.markdown(_md(f"""#### {render_icon('tag', size=16)} Classes détectées"""), unsafe_allow_html=True)
+        st.markdown(_md(f"""#### {render_icon('tag', size=16)} {t('analysis.sidebar.classes_detected')}"""), unsafe_allow_html=True)
         for cname in CLASS_NAMES:
             color, soft, label, icon = class_color(cname)
             st.markdown(_md(f"""
@@ -388,26 +389,26 @@ def render() -> None:
             """), unsafe_allow_html=True)
 
         st.markdown("---")
-        st.markdown(_md(f"""#### {render_icon('palette', size=16)} Visualisation Grad-CAM"""), unsafe_allow_html=True)
+        st.markdown(_md(f"""#### {render_icon('palette', size=16)} {t('analysis.sidebar.gradcam_section')}"""), unsafe_allow_html=True)
     
         heatmap_alpha = st.slider(
-            "Intensité",
+            t('analysis.sidebar.intensity_label'),
             0.1, 0.9, 0.5, 0.05,
-            help="Opacité de la superposition Grad-CAM",
+            help=t('analysis.sidebar.intensity_help'),
             key="heatmap_slider",
         )
     
         colormap = st.selectbox(
-            "Palette",
+            t('analysis.sidebar.palette_label'),
             ["JET", "HOT", "PLASMA", "VIRIDIS", "INFERNO"],
             index=0,
-            help="Palette de couleurs utilisée pour dessiner la carte Grad-CAM",
+            help=t('analysis.sidebar.palette_help'),
             key="colormap_select",
         )
 
         if METRICS:
             st.markdown("---")
-            st.markdown(_md(f"""#### {render_icon('bar-chart-3', size=16)} Performance par classe"""), unsafe_allow_html=True)
+            st.markdown(_md(f"""#### {render_icon('bar-chart-3', size=16)} {t('analysis.sidebar.perf_by_class')}"""), unsafe_allow_html=True)
             for cname in CLASS_NAMES:
                 cm = METRICS["classes"].get(cname)
                 if not cm:
@@ -428,8 +429,8 @@ def render() -> None:
         st.markdown("---")
         st.markdown(_md(f"""
         <div class="disclaimer">
-            {render_icon('alert-triangle', size=16)} <b>Prototype académique</b><br>
-            Les prédictions n'ont pas de valeur diagnostique et ne remplacent pas l'avis d'un radiologue ou d'un médecin.
+            {render_icon('alert-triangle', size=16)} <b>{t('analysis.sidebar.disclaimer_title')}</b><br>
+            {t('analysis.sidebar.disclaimer_text')}
         </div>
         """), unsafe_allow_html=True)
 
@@ -440,17 +441,16 @@ def render() -> None:
     <div class="card fade-in" style="margin-bottom: 24px;">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
             {render_icon('upload-cloud', size=24, color='var(--accent-primary)')}
-            <h3 style="margin: 0;">Charger des radiographies</h3>
+            <h3 style="margin: 0;">{t('analysis.upload.title')}</h3>
         </div>
         <p style="font-size: 14px; margin: 0; color: var(--text-secondary);">
-        Déposez une ou plusieurs radiographies pulmonaires (PNG, JPG). Le modèle estime la classe
-        la plus probable et génère une carte Grad-CAM des zones ayant influencé la décision.
+        {t('analysis.upload.description')}
         </p>
     </div>
     """), unsafe_allow_html=True)
 
     uploaded_files = st.file_uploader(
-        "Sélectionner des images",
+        t('analysis.upload.selector_label'),
         type=["png", "jpg", "jpeg"],
         accept_multiple_files=True,
         label_visibility="collapsed",
@@ -479,13 +479,13 @@ def render() -> None:
             <div class="card fade-in" style="display:flex; align-items:center; justify-content:space-between; padding: 16px 24px;">
                 <div>
                     <span style="font-size: 18px; font-weight: 600; color: var(--text-primary);">
-                        {render_icon('chart-line', size=16, color='var(--accent-primary)')} Analyse en cours
+                        {render_icon('chart-line', size=16, color='var(--accent-primary)')} {t('analysis.processing.analyzing_title')}
                     </span>
                     <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-secondary);">
-                        {len(uploaded_files)} image(s) sélectionnée(s)
+                        {t('analysis.processing.images_selected', count=len(uploaded_files))}
                     </p>
                 </div>
-                <span class="badge badge-info pulse"><span class="icon-spin">{render_icon('loader', size=13)}</span> EN COURS</span>
+                <span class="badge badge-info pulse"><span class="icon-spin">{render_icon('loader', size=13)}</span> {t('analysis.processing.in_progress_badge')}</span>
             </div>
             """), unsafe_allow_html=True)
 
@@ -494,22 +494,23 @@ def render() -> None:
             rejected = []
 
             for i, uploaded_file in enumerate(uploaded_files):
-                with st.status(f"Analyse de {uploaded_file.name}...", expanded=(i == 0), state="running") as status:
+                with st.status(t('analysis.processing.analyzing_file', name=uploaded_file.name), expanded=(i == 0), state="running") as status:
                     try:
                         step_start = time.perf_counter()
                         img_rgb, img_array, reject_reason = load_and_preprocess_image(uploaded_file, IMG_SIZE)
                         validation_ms = (time.perf_counter() - step_start) * 1000
                         if img_rgb is None or img_array is None:
-                            rejected.append((uploaded_file.name, reject_reason or "Image non valide."))
-                            status.update(label=f"{uploaded_file.name} — rejetée", state="error")
-                            st.markdown(f"{render_icon('x-circle', size=14, color='var(--danger-text)')} Validation échouée ({validation_ms:.0f} ms) : {reject_reason or 'Image non valide.'}", unsafe_allow_html=True)
+                            invalid_message = reject_reason or t('analysis.processing.invalid_image')
+                            rejected.append((uploaded_file.name, invalid_message))
+                            status.update(label=t('analysis.processing.rejected_status', name=uploaded_file.name), state="error")
+                            st.markdown(f"{render_icon('x-circle', size=14, color='var(--danger-text)')} {t('analysis.processing.validation_failed', ms=validation_ms, reason=invalid_message)}", unsafe_allow_html=True)
                             continue
-                        st.markdown(f"{render_icon('check-circle', size=14, color='var(--success-text)')} Validation &amp; prétraitement ({validation_ms:.0f} ms)", unsafe_allow_html=True)
+                        st.markdown(f"{render_icon('check-circle', size=14, color='var(--success-text)')} {t('analysis.processing.validation_ok', ms=validation_ms)}", unsafe_allow_html=True)
 
                         inference_start = time.perf_counter()
                         heatmap, pred_class, preds_all = gradcam(model, img_array, LAST_CONV_LAYER)
                         inference_ms = (time.perf_counter() - inference_start) * 1000
-                        st.markdown(f"{render_icon('brain-circuit', size=14, color='var(--success-text)')} Prédiction CNN &amp; Grad-CAM ({inference_ms:.0f} ms)", unsafe_allow_html=True)
+                        st.markdown(f"{render_icon('brain-circuit', size=14, color='var(--success-text)')} {t('analysis.processing.prediction_ok', ms=inference_ms)}", unsafe_allow_html=True)
 
                         if heatmap is not None:
                             overlay_start = time.perf_counter()
@@ -523,7 +524,7 @@ def render() -> None:
                                     timestamp = datetime.now().strftime('%H%M%S_%f')[:10]
                                     zip_file.writestr(f"gradcam_{base_name}_{timestamp}.png", BytesIO(buffer).getvalue())
                             overlay_ms = (time.perf_counter() - overlay_start) * 1000
-                            st.markdown(f"{render_icon('flame', size=14, color='var(--success-text)')} Carte de chaleur &amp; export ZIP ({overlay_ms:.0f} ms)", unsafe_allow_html=True)
+                            st.markdown(f"{render_icon('flame', size=14, color='var(--success-text)')} {t('analysis.processing.heatmap_ok', ms=overlay_ms)}", unsafe_allow_html=True)
 
                             confidence = round(float(preds_all[pred_class]) * 100, 2)
                             class_probabilities = {name: round(float(prob) * 100, 2) for name, prob in zip(CLASS_NAMES, preds_all)}
@@ -537,9 +538,9 @@ def render() -> None:
                                 language=get_language(),
                             )
                             report_ms = (time.perf_counter() - report_start) * 1000
-                            st.markdown(f"{render_icon('file-text', size=14, color='var(--success-text)')} Rapport IA généré ({report_ms:.0f} ms)", unsafe_allow_html=True)
+                            st.markdown(f"{render_icon('file-text', size=14, color='var(--success-text)')} {t('analysis.processing.report_ok', ms=report_ms)}", unsafe_allow_html=True)
 
-                            if config.enable_history:
+                            if get_setting("enable_history"):
                                 try:
                                     from persistence import get_store
                                     history_start = time.perf_counter()
@@ -558,7 +559,7 @@ def render() -> None:
                                         heatmap_image=_colorized_heatmap_for_storage(img_rgb.shape, heatmap, colormap),
                                     )
                                     history_ms = (time.perf_counter() - history_start) * 1000
-                                    st.markdown(f"{render_icon('database', size=14, color='var(--success-text)')} Enregistré dans l'historique ({history_ms:.0f} ms)", unsafe_allow_html=True)
+                                    st.markdown(f"{render_icon('database', size=14, color='var(--success-text)')} {t('analysis.processing.saved_history', ms=f'{history_ms:.0f}')}", unsafe_allow_html=True)
                                 except Exception as e:
                                     st.warning(f"{render_icon('alert-triangle', size=14, color='var(--warning-text)')} Analyse effectuée mais non enregistrée dans l'historique : {str(e)}")
 
@@ -584,7 +585,7 @@ def render() -> None:
 
                     except Exception as e:
                         status.update(label=f"{uploaded_file.name} — erreur", state="error")
-                        st.error(f"{render_icon('x-circle', size=14, color='var(--danger-text)')} Erreur avec {uploaded_file.name} : {str(e)}")
+                        st.error(f"{render_icon('x-circle', size=14, color='var(--danger-text)')} {t('analysis.processing.file_error', name=uploaded_file.name, error=str(e))}")
                         continue
 
                 progress_bar.progress((i + 1) / len(uploaded_files))
@@ -614,7 +615,7 @@ def render() -> None:
         if not results:
             st.markdown(_md(f"""
             <div class='card' style='border-color: rgba(253, 126, 20, 0.3);'>
-                <h4 style='margin:0; color:var(--warning-text);'>{render_icon('alert-triangle', size=16)} Aucune analyse valide</h4>
+                <h4 style='margin:0; color:var(--warning-text);'>{render_icon('alert-triangle', size=16)} {t('analysis.processing.no_valid_analysis_title')}</h4>
                 <p style='margin:8px 0 0 0; font-size:13px; color:var(--text-secondary);'>
                 Aucune image exploitable n'a été trouvée. Vérifiez qu'il s'agit bien de radiographies en niveaux de gris, au format PNG/JPG.
                 </p>
@@ -635,7 +636,7 @@ def render() -> None:
 
         st.markdown(_md(f"""
         <div style='margin: 36px 0 16px 0;'>
-            <h2>{render_icon('chart-pie', size=16, color='var(--accent-primary)')} Résultats de l'analyse</h2>
+            <h2>{render_icon('chart-pie', size=16, color='var(--accent-primary)')} Ré{t('analysis.results.title')}</h2>
         </div>
         """), unsafe_allow_html=True)
 
@@ -656,7 +657,7 @@ def render() -> None:
             st.markdown(_md(f"""
             <div class="metric-card">
                 <div class="metric-value" style="color:{conf_color};">{avg_conf:.1f}%</div>
-                <div class="metric-label">{render_icon('gauge', size=14)} Confiance moyenne</div>
+                <div class="metric-label">{render_icon('gauge', size=14)} {t('analysis.results.avg_confidence')}</div>
             </div>
             """), unsafe_allow_html=True)
 
@@ -666,7 +667,7 @@ def render() -> None:
             st.markdown(_md(f"""
             <div class="metric-card">
                 <div class="metric-value" style="color:{color};">{render_icon(icon, size=20, color=color)} {label}</div>
-                <div class="metric-label">{render_icon('stethoscope', size=14)} Diagnostic dominant</div>
+                <div class="metric-label">{render_icon('stethoscope', size=14)} {t('analysis.results.dominant_diagnosis')}</div>
             </div>
             """), unsafe_allow_html=True)
 
@@ -676,7 +677,7 @@ def render() -> None:
             st.markdown(_md(f"""
             <div class="metric-card">
                 <div class="metric-value" style="color:var(--danger-text);">{covid_count}</div>
-                <div class="metric-label">{render_icon('shield-check', size=14)} Cas COVID-19 ({covid_percent:.0f}%)</div>
+                <div class="metric-label">{render_icon('shield-check', size=14)} {t('analysis.results.covid_cases', percent=covid_percent)}</div>
             </div>
             """), unsafe_allow_html=True)
 
@@ -691,7 +692,7 @@ def render() -> None:
         with col_chart1:
             with st.container(border=True):
                 st.markdown(_md(f"""
-                <h4 style='margin-bottom:14px;'>{render_icon('chart-pie', size=14)} Distribution par classe</h4>
+                <h4 style='margin-bottom:14px;'>{render_icon('chart-pie', size=14)} {t('analysis.results.class_distribution')}</h4>
                 """), unsafe_allow_html=True)
                 class_dist = df_results["Predicted Class"].value_counts()
                 if len(class_dist) > 0:
@@ -717,7 +718,7 @@ def render() -> None:
         with col_chart2:
             with st.container(border=True):
                 st.markdown(_md(f"""
-                <h4 style='margin-bottom:14px;'>{render_icon('bar-chart-3', size=14)} Distribution des scores de confiance</h4>
+                <h4 style='margin-bottom:14px;'>{render_icon('bar-chart-3', size=14)} {t('analysis.results.confidence_distribution')}</h4>
                 """), unsafe_allow_html=True)
                 if len(df_results) > 0:
                     counts, bin_edges = np.histogram(df_results["Confidence"], bins=15, range=(0, 100))
@@ -736,14 +737,14 @@ def render() -> None:
                     avg_conf = df_results["Confidence"].mean()
                     fig_conf.add_vline(
                         x=avg_conf, line_dash="dash", line_color="#0F172A", line_width=2,
-                        annotation_text=f"moyenne {avg_conf:.1f}%",
+                        annotation_text=t('analysis.results.confidence_avg_annotation', value=f'{avg_conf:.1f}'),
                         annotation_position="top right",
                         annotation_font_size=11,
                         annotation_font_color="#0F172A",
                     )
                     fig_conf.update_layout(
-                        xaxis_title="Confiance (%)",
-                        yaxis_title="Nombre d'images",
+                        xaxis_title=t('analysis.results.confidence_axis'),
+                        yaxis_title=t('analysis.results.images_axis'),
                         bargap=0.12,
                     )
                     fig_conf = plotly_light_layout(fig_conf)
@@ -754,7 +755,7 @@ def render() -> None:
         # Per-class breakdown
         st.markdown(_md(f"""
         <div style='margin: 32px 0 16px 0;'>
-            <h3>{render_icon('list', size=16)} Détail par classe</h3>
+            <h3>{render_icon('list', size=16)} Dé{t('analysis.results.per_class_title')}</h3>
         </div>
         """), unsafe_allow_html=True)
         class_cols = st.columns(4)
@@ -779,7 +780,7 @@ def render() -> None:
                         <div style='width:{percent}%; height:100%; background:{color}; border-radius:2px;'></div>
                     </div>
                     <div style='display:flex; justify-content:space-between; font-size:13px;'>
-                        <span style='color:var(--text-muted);'>Confiance moy.</span>
+                        <span style='color:var(--text-muted);'>{t('analysis.results.avg_confidence_short')}</span>
                         <span style='color:var(--text-primary);'>{avg:.1f}%</span>
                     </div>
                 </div>
@@ -788,7 +789,7 @@ def render() -> None:
         # Grad-CAM Gallery
         st.markdown(_md(f"""
         <div style='margin: 40px 0 16px 0;'>
-            <h2>{render_icon('flame', size=16, color='var(--accent-primary)')} Cartes Grad-CAM</h2>
+            <h2>{render_icon('flame', size=16, color='var(--accent-primary)')} {t('analysis.gradcam.gallery_title')}</h2>
         </div>
         """), unsafe_allow_html=True)
 
@@ -830,16 +831,16 @@ def render() -> None:
             # Images : Original et Grad-CAM (fusion) uniquement
             img_col1, img_col2 = st.columns(2)
             with img_col1:
-                st.markdown(f"{render_icon('image', size=12)} **Original**", unsafe_allow_html=True)
+                st.markdown(f"{render_icon('image', size=12)} **{t('analysis.gradcam.caption_original')}**", unsafe_allow_html=True)
                 st.image(row["Original"], width='stretch', output_format="auto")
             with img_col2:
-                st.markdown(f"{render_icon('flame', size=12)} **Grad-CAM**", unsafe_allow_html=True)
+                st.markdown(f"{render_icon('flame', size=12)} **{t('analysis.gradcam.caption_gradcam')}**", unsafe_allow_html=True)
                 st.image(live_overlay, width='stretch', output_format="auto")
 
             row_probabilities = {name: row.get(f"Prob_{name}", 0.0) for name in CLASS_NAMES}
             gauge_col, bars_col = st.columns([1, 2])
             with gauge_col:
-                confidence_gauge(confidence, label="Confiance")
+                confidence_gauge(confidence, label=t('analysis.gradcam.gauge_label'))
             with bars_col:
                 st.markdown("<div style='padding-top:8px;'>", unsafe_allow_html=True)
                 probability_bars(row_probabilities, class_color)
@@ -853,15 +854,15 @@ def render() -> None:
                     <div class="readout-value" style="font-size:14px; color:{color};">{label}</div>
                 </div>
                 <div class="readout-item">
-                    <div class="readout-label">{render_icon('gauge', size=13)} Confiance</div>
+                    <div class="readout-label">{render_icon('gauge', size=13)} {t('analysis.gradcam.confidence')}</div>
                     <div class="readout-value" style="font-size:14px;">{confidence:.1f}%</div>
                 </div>
                 <div class="readout-item">
-                    <div class="readout-label">{render_icon('layers', size=13)} Couche cible</div>
+                    <div class="readout-label">{render_icon('layers', size=13)} {t('analysis.gradcam.target_layer')}</div>
                     <div class="readout-value" style="font-size:13px; font-weight:400; color:var(--text-secondary);">{target_layer_display}</div>
                 </div>
                 <div class="readout-item">
-                    <div class="readout-label">{render_icon('brain-circuit', size=13)} Méthode</div>
+                    <div class="readout-label">{render_icon('brain-circuit', size=13)} Mé{t('analysis.gradcam.method')}</div>
                     <div class="readout-value" style="font-size:14px;">Grad-CAM</div>
                 </div>
             </div>
@@ -877,11 +878,11 @@ def render() -> None:
                 if ok:
                     download_button_with_icon(
                         'download',
-                        'Original',
+                        t('analysis.gradcam.download_original'),
                         base64.b64encode(buf).decode(),
                         f"{safe_name}_original.png",
                         "image/png",
-                        "Télécharger l'image originale",
+                        "Télé{t('analysis.gradcam.download_original_help')}",
                         f"dl_original_{img_idx}"
                     )
             
@@ -890,11 +891,11 @@ def render() -> None:
                 if ok:
                     download_button_with_icon(
                         'download',
-                        'Grad-CAM',
+                        t('analysis.gradcam.download_heatmap'),
                         base64.b64encode(buf).decode(),
                         f"{safe_name}_gradcam.png",
                         "image/png",
-                        "Télécharger l'image Grad-CAM",
+                        "Télé{t('analysis.gradcam.download_heatmap_help')}",
                         f"dl_gradcam_{img_idx}"
                     )
             
@@ -903,11 +904,11 @@ def render() -> None:
                 pdf_bytes = generate_pdf_report(report, row["Original"], live_overlay, row["Heatmap"])
                 download_button_with_icon(
                     'file-text',
-                    'Rapport (PDF)',
+                    t('analysis.gradcam.download_pdf'),
                     pdf_bytes,
                     f"rapport_{safe_name}.pdf",
                     "application/pdf",
-                    "Rapport complet pour cette image",
+                    "t('analysis.gradcam.download_pdf_help')",
                     f"pdf_dl_{img_idx}"
                 )
 
@@ -922,19 +923,19 @@ def render() -> None:
                 <div style="display:grid; gap:12px;">
                     <div style="background:var(--bg-input); padding:12px 16px; border-radius:var(--radius-sm); border-left: 4px solid #2563EB;">
                         <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em;">
-                            {render_icon('eye', size=14)} Observations
+                            {render_icon('eye', size=14)} {t('analysis.gradcam.observations')}
                         </div>
                         <div style="font-size:14px; color:var(--text-primary); margin-top:4px;">{report_dict.get('findings', 'N/A')}</div>
                     </div>
                     <div style="background:var(--bg-input); padding:12px 16px; border-radius:var(--radius-sm); border-left: 4px solid #60A5FA;">
                         <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em;">
-                            {render_icon('message-circle', size=14)} Impression
+                            {render_icon('message-circle', size=14)} {t('analysis.gradcam.impression')}
                         </div>
                         <div style="font-size:14px; color:var(--text-primary); margin-top:4px;">{report_dict.get('impression', 'N/A')}</div>
                     </div>
                     <div style="background:var(--bg-input); padding:12px 16px; border-radius:var(--radius-sm); border-left: 4px solid #10B981;">
                         <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em;">
-                            {render_icon('shield-check', size=14)} Recommandation
+                            {render_icon('shield-check', size=14)} {t('analysis.gradcam.recommendation')}
                         </div>
                         <div style="font-size:14px; color:var(--text-primary); margin-top:4px;">{report_dict.get('recommendation', 'N/A')}</div>
                     </div>
@@ -955,11 +956,11 @@ def render() -> None:
         with col_dl1:
             download_button_with_icon(
                 'archive',
-                'Visualisations (ZIP)',
+                t('analysis.export.zip_label'),
                 zip_buffer.getvalue(),
                 f"radiology_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
                 "application/zip",
-                "Toutes les radiographies avec superposition Grad-CAM",
+                "t('analysis.export.zip_help')",
                 "zip_dl"
             )
     
@@ -968,7 +969,7 @@ def render() -> None:
             csv_data = df_results[csv_columns].to_csv(index=False, encoding="utf-8-sig")
             download_button_with_icon(
                 'bar-chart-3',
-                'Rapport CSV',
+                t('analysis.export.csv_label'),
                 csv_data.encode("utf-8-sig"),
                 f"radiology_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                 "text/csv",
@@ -984,7 +985,7 @@ def render() -> None:
             )
             download_button_with_icon(
                 'file-text',
-                'Rapports JSON',
+                t('analysis.export.json_label'),
                 all_reports_json.encode("utf-8"),
                 f"radiology_reports_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
                 "application/json",
@@ -1029,7 +1030,7 @@ def render() -> None:
                 <div style="display:grid; gap:8px; margin-top:12px;">
                     <div style="display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--bg-input); border-radius:var(--radius-sm);">
                         <span style="font-size:18px; font-weight:700; color:var(--accent-primary); width: 28px; text-align: center;">1</span>
-                        <span style="color:var(--text-primary);">{render_icon('upload-cloud', size=14)} Déposer une ou plusieurs radiographies (PNG/JPG)</span>
+                        <span style="color:var(--text-primary);">{render_icon('upload-cloud', size=14)} Dé{t('analysis.home.step1')}</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--bg-input); border-radius:var(--radius-sm);">
                         <span style="font-size:18px; font-weight:700; color:var(--accent-primary); width: 28px; text-align: center;">2</span>
@@ -1037,11 +1038,11 @@ def render() -> None:
                     </div>
                     <div style="display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--bg-input); border-radius:var(--radius-sm);">
                         <span style="font-size:18px; font-weight:700; color:var(--accent-primary); width: 28px; text-align: center;">3</span>
-                        <span style="color:var(--text-primary);">{render_icon('flame', size=14)} Une carte Grad-CAM localise les zones d'intérêt</span>
+                        <span style="color:var(--text-primary);">{render_icon('flame', size=14)} {t('analysis.home.step3')}érêt</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--bg-input); border-radius:var(--radius-sm);">
                         <span style="font-size:18px; font-weight:700; color:var(--accent-primary); width: 28px; text-align: center;">4</span>
-                        <span style="color:var(--text-primary);">{render_icon('download', size=14)} Export du rapport (CSV) et des visualisations (ZIP)</span>
+                        <span style="color:var(--text-primary);">{render_icon('download', size=14)} {t('analysis.home.step4')}</span>
                     </div>
                 </div>
             </div>
@@ -1074,9 +1075,9 @@ def render() -> None:
     
         feat_col1, feat_col2, feat_col3 = st.columns(3)
         features = [
-            (f"{render_icon('brain-circuit', size=14)} Classification 4 classes", "COVID-19, opacité pulmonaire, pneumonie virale, ou normal, avec un score de confiance par classe."),
+            (f"{render_icon('brain-circuit', size=14)} {t('analysis.home.feature1_title')}", "COVID-19, opacité pulmonaire, pneumonie virale, ou normal, avec un score de confiance par classe."),
             (f"{render_icon('search', size=14)} Explicabilité Grad-CAM", "Cartes de chaleur superposées à la radiographie originale, pour visualiser les zones jugées pertinentes par le modèle."),
-            (f"{render_icon('download', size=14)} Rapports exportables", "Export CSV des prédictions détaillées et ZIP des visualisations, pour analyse ou archivage."),
+            (f"{render_icon('download', size=14)} {t('analysis.home.feature3_title')}", "Export CSV des prédictions détaillées et ZIP des visualisations, pour analyse ou archivage."),
         ]
         for col, (title, desc) in zip([feat_col1, feat_col2, feat_col3], features):
             with col:

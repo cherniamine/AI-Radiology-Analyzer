@@ -87,6 +87,57 @@ def inject_theme(rtl: bool = False, dark: bool = False) -> None:
         font-family: var(--font-body);
     }
 
+    /* Selectbox haut de gamme : style coherent avec le design "negatoscope"
+       pour les boutons de langue / filtres / options de session. */
+    div[data-testid="stSelectbox"] > label {
+        font-weight: 600 !important;
+        color: var(--text-primary) !important;
+        margin-bottom: 0.35rem !important;
+    }
+
+    div[data-baseweb="select"] {
+        border: 1px solid var(--border-color) !important;
+        border-radius: 14px !important;
+        background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(243,237,225,0.96)) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 1px 2px rgba(36,28,16,0.04) !important;
+        min-height: 44px !important;
+    }
+
+    div[data-baseweb="select"]:hover {
+        border-color: var(--accent-secondary) !important;
+        box-shadow: 0 0 0 3px rgba(232, 162, 61, 0.12) !important;
+    }
+
+    div[data-baseweb="select"] > div {
+        background: transparent !important;
+        border: none !important;
+        min-height: 44px !important;
+    }
+
+    div[data-baseweb="select"] [role="button"] {
+        background: transparent !important;
+        border: none !important;
+        color: var(--text-primary) !important;
+        font-weight: 600 !important;
+    }
+
+    div[data-baseweb="select"] [role="listbox"] {
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 12px !important;
+        box-shadow: var(--shadow-hover) !important;
+    }
+
+    div[data-baseweb="select"] li {
+        color: var(--text-primary) !important;
+    }
+
+    div[data-baseweb="select"] li:hover,
+    div[data-baseweb="select"] [aria-selected="true"] {
+        background: rgba(194, 121, 12, 0.08) !important;
+        color: var(--text-primary) !important;
+    }
+
     h1, h2, h3, h4, h5, h6 {
         font-family: var(--font-display) !important;
         font-weight: 700 !important;

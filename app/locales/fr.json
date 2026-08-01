@@ -1,7 +1,9 @@
 {
   "common": {
     "app_title": "AI Radiology Analyzer",
+    "app_subtitle": "Suite d'assistance diagnostique",
     "language_selector_label": "Langue",
+    "theme_toggle_help": "Changer de thème",
     "disclaimer_short": "Prototype académique — ne remplace pas un avis médical professionnel.",
     "nav": {
       "analysis": "Nouvelle analyse",
@@ -34,7 +36,8 @@
     "roadmap_title": "Feuille de route",
     "roadmap_done": "✅ Architecture documentée · ✅ Validation des entrées · ✅ Rapport IA (PDF/JSON) · ✅ Grad-CAM comparatif · ✅ Docker · ✅ CI/CD · ✅ Navigation multi-pages · ✅ Persistance (Historique, Dashboard) · ✅ Internationalisation complète (en/fr/ar) · ✅ Paramètres éditables",
     "roadmap_pending": "🚧 Assistant IA (RAG + Ollama) — non testé de bout en bout avec un vrai serveur Ollama",
-    "footer_built_with": "Construit avec TensorFlow, Streamlit, Plotly et ReportLab."
+    "footer_built_with": "Construit avec TensorFlow, Streamlit, Plotly et ReportLab.",
+    "footer_meta": "{app_title} · Version {version} · Licence {license}"
   },
   "settings": {
     "title": "Paramètres",
@@ -59,15 +62,17 @@
       "ollama_model": "Modèle Ollama"
     },
     "help": {
+      "language_selector": "Langue de l'interface — synchronisée avec la barre latérale",
       "gradcam_alpha": "Valeur par défaut du curseur d'intensité Grad-CAM sur la page Analyse",
       "max_upload": "Taille maximale acceptée par fichier uploadé, en mégaoctets",
       "llm_provider": "Seul « ollama » (local, sans API payante) est disponible pour l'instant",
       "ollama_base_url": "Adresse du serveur Ollama local (ex : http://localhost:11434)",
       "ollama_model": "Nom du modèle Ollama à utiliser (doit avoir été téléchargé via `ollama pull`)",
-      "reset_button": "Revenir aux valeurs de .env pour tous les réglages ci-dessus"
+      "reset_button": "Revenir aux valeurs de .env pour tous les réglages ci-dessus",
+      "theme_toggle": "Bascule entre thème clair et sombre — synchronisé avec le bouton de la barre latérale"
     },
     "note": "Ces valeurs partent de `.env` (voir `.env.example`) ou de leurs valeurs par défaut dans `app/config.py`. Toute modification ci-dessus n'est valable que pour cette session du navigateur — un redémarrage de l'application repart de `.env`.",
-    "language_theme_note": "Langue et thème se règlent depuis la barre latérale, pas ici.",
+    "language_theme_note": "La langue et le thème sont synchronisés avec la barre latérale et peuvent aussi être modifiés ici.",
     "overridden_badge": "modifié",
     "reset_button": "↩️ Réinitialiser aux valeurs de .env",
     "reset_success": "Réglages réinitialisés aux valeurs de .env."
@@ -100,7 +105,8 @@
     "thinking": "Réflexion…",
     "input_placeholder": "Posez votre question…",
     "clear": "Effacer la conversation",
-    "clear_help": "Supprime l'historique de cette conversation, sans supprimer l'historique des analyses."
+    "clear_help": "Supprime l'historique de cette conversation, sans supprimer l'historique des analyses.",
+    "sources": "Sources :"
   },
   "dashboard": {
     "title": "Dashboard",

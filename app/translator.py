@@ -1,23 +1,4 @@
-"""
-translator.py
-
-Internationalisation (i18n) minimale et honnete :
-
-- Dictionnaires de traduction charges depuis app/locales/{lang}.json
-- t("cle.pointee") renvoie la traduction ; si la cle manque dans la langue
-  courante, repli sur l'anglais, puis en dernier recours renvoie la cle
-  elle-meme (visible, donc detectable) plutot que d'inventer un texte ou
-  de faire planter la page.
-- La langue courante persiste via l'URL (?lang=fr), pas seulement
-  st.session_state : un lien partage ou un rechargement de page conservent
-  donc la langue choisie, ce qu'une simple variable de session ne permet
-  pas.
-
-Ce module ne couvre aujourd'hui que la navigation, la page "A propos" et la
-page "Parametres" (voir README, section Pistes d'amelioration, pour le
-perimetre exact) — les autres pages restent en francais tant qu'elles n'ont
-pas ete migrees vers t().
-"""
+"""Internationalisation centralisée de l'application."""
 
 from __future__ import annotations
 
