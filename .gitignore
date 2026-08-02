@@ -21,7 +21,21 @@ __pycache__/
 *.dylib
 
 # ============================================
-# Modeles et donnees
+# Jeu de donnees (COVID-19 Radiography Database)
+# ============================================
+# Le dataset brut n'est jamais versionne : il pese ~800 Mo et est soumis a
+# une licence d'attribution (voir section "Jeu de donnees" du README pour
+# le lien de telechargement et la citation). Seuls les fichiers de
+# metadonnees (.xlsx, README du dataset) sont legers et peuvent rester si besoin.
+data/COVID/
+data/Lung_Opacity/
+data/NORMAL/
+data/Viral Pneumonia/
+data/processed/
+data/raw/
+
+# ============================================
+# Modeles et resultats
 # ============================================
 # Les dossiers complets sont ignores (voir README, section "Pistes
 # d'amelioration" : ces gros fichiers devraient a terme passer par Git LFS),
@@ -32,8 +46,6 @@ models/
 !models/simple_cnn_model.h5
 results/
 !results/metrics.json
-data/processed/
-data/raw/
 *.h5
 !models/simple_cnn_model.h5
 *.hdf5
