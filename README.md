@@ -332,6 +332,16 @@ source venv/bin/activate        # Windows : venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+### Streamlit Community Cloud
+
+Pour le déploiement sur Streamlit Community Cloud, le dépôt inclut désormais :
+
+- un `runtime.txt` qui force un runtime Python compatible avec TensorFlow (`python-3.11`)
+- une version CPU de TensorFlow et `opencv-python-headless` dans `requirements.txt`
+- une config `.streamlit/config.toml` en mode headless pour le service Streamlit
+
+Cela évite l'erreur `No matching distribution found for tensorflow>=2.10.0` causée par l'environnement Python 3.14 de Community Cloud.
+
 ## Utilisation
 
 **Lancer l'application** (si vous n'utilisez pas Docker) :
