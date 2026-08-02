@@ -14,6 +14,7 @@ Classification de radiographies pulmonaires (COVID-19, opacité pulmonaire, pneu
 ## Sommaire
 
 - [Aperçu](#aperçu)
+- [Captures d'écran](#captures-décran)
 - [Pipeline](#pipeline)
 - [Résultats](#résultats)
 - [Architecture du modèle](#architecture-du-modèle)
@@ -43,6 +44,94 @@ Le projet couvre l'ensemble du pipeline de classification d'images médicales :
 - **Explicabilité** via Grad-CAM : vue comparative côte à côte (original / heatmap / fusion), transparence ajustable par image, export PNG individuel de chaque vue
 - **Rapport structuré par gabarit** (`app/report_generator.py`) : observations, impression et recommandation adaptées à la classe prédite, exportable en PDF (original + Grad-CAM + fusion + rapport) et en JSON
 - **Interface applicative** (Streamlit) permettant de déposer des radiographies et d'obtenir un rapport exportable (CSV, PDF, JSON) et des visualisations (ZIP)
+
+## Captures d'écran
+
+Navigation multi-pages complète (Dashboard, Analyse, Rapports, Historique, Assistant IA, Paramètres, À propos), identité visuelle "négatoscope" (palette ambre, conforme WCAG AA — voir [Accessibilité](#accessibilité)), disponible en français, anglais et arabe (support RTL réel), en thème clair et sombre.
+
+### 📊 Dashboard
+
+KPI et graphiques calculés depuis l'historique réel des analyses (répartition par classe, confiance moyenne, temps d'inférence, évolution dans le temps) — jamais de données simulées.
+
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" alt="Dashboard" width="800"/>
+</p>
+
+### 🔬 Nouvelle analyse
+
+Page d'accueil de l'analyse (modèle, résolution, exactitude, mode d'emploi) :
+
+<p align="center">
+  <img src="docs/screenshots/analysis-start.png" alt="Nouvelle analyse — accueil" width="800"/>
+</p>
+
+Dépôt de plusieurs radiographies avec suivi détaillé de chaque étape du pipeline (validation, CNN, Grad-CAM, rapport) :
+
+<p align="center">
+  <img src="docs/screenshots/analysis-upload.png" alt="Nouvelle analyse — upload et progression" width="800"/>
+</p>
+
+Résultats agrégés (distribution par classe, distribution des scores de confiance, détail par classe) :
+
+<p align="center">
+  <img src="docs/screenshots/analysis-results.png" alt="Résultats de l'analyse" width="800"/>
+</p>
+
+Détail d'une image analysée : classe prédite, jauge de confiance, probabilités par classe, et rapport IA structuré (observations / impression / recommandation) :
+
+<p align="center">
+  <img src="docs/screenshots/analysis-detail.png" alt="Détail d'une analyse" width="800"/>
+</p>
+
+### 🔥 Cartes Grad-CAM
+
+Comparaison côte à côte (original / heatmap), transparence et colormap ajustables individuellement par image, sans re-inférence.
+
+<p align="center">
+  <img src="docs/screenshots/gradcam-compare.png" alt="Comparaison Grad-CAM" width="800"/>
+</p>
+
+### 📄 Rapports
+
+Aperçu PDF inline (intégré en base64) et aperçu JSON interactif pour chaque analyse enregistrée.
+
+<p align="center">
+  <img src="docs/screenshots/reports.png" alt="Rapports" width="800"/>
+</p>
+
+### 🕓 Historique
+
+Recherche par nom de fichier, filtre par classe, détails et export (JSON/PDF) ou suppression d'une analyse passée.
+
+<p align="center">
+  <img src="docs/screenshots/history.png" alt="Historique" width="800"/>
+</p>
+
+### 🤖 Assistant IA
+
+Chat RAG local (garde-fou médical, recherche documentaire, génération via Ollama), avec sources citées pour chaque réponse.
+
+<p align="center">
+  <img src="docs/screenshots/assistant.png" alt="Assistant IA" width="800"/>
+</p>
+
+### ⚙️ Paramètres et 🌍 internationalisation
+
+9 réglages modifiables en direct (opacité Grad-CAM, taille max. d'upload, interrupteurs de fonctionnalités, fournisseur/modèle Ollama), disponibles dans les 3 langues supportées — y compris en arabe avec mise en page RTL complète :
+
+| Français | English | العربية (RTL) |
+|:---:|:---:|:---:|
+| ![Paramètres FR](docs/screenshots/settings-fr.png) | ![Settings EN](docs/screenshots/settings-en.png) | ![الإعدادات](docs/screenshots/settings-ar.png) |
+
+### ℹ️ À propos
+
+Contenu réel (architecture, technologies, limites connues, feuille de route), en thème clair et sombre :
+
+| Thème clair | Thème sombre |
+|:---:|:---:|
+| ![À propos clair](docs/screenshots/about-light.png) | ![À propos sombre](docs/screenshots/about-dark.png) |
+
+---
 
 ## Pipeline
 
@@ -355,7 +444,18 @@ Le projet évolue vers une application de type SaaS (navigation multi-pages, his
 - Déplacer `data/` et `models/*.h5` hors du contrôle de version (Git LFS ou stockage cloud).
 - Déploiement d'une démo publique (Hugging Face Spaces ou équivalent).
 
-## Auteur
+
+
+## 👤 Auteur
 
 **Cherni Mohamed Amine**
-Étudiant ingénieur en IA & Data Science — Université Centrale Tunisie
+Élève-ingénieur en Génie Informatique (Data Science & IA) — Université Centrale Tunisie
+
+- 🔗 [LinkedIn](https://www.linkedin.com/in/cherni-mohamed-amine-40158b2b1/)
+- 💻 [GitHub](https://github.com/cherniamine)
+
+---
+
+## 📄 License
+
+Ce projet est distribué sous licence MIT — voir le fichier [LICENSE](LICENSE) pour plus de détails.
