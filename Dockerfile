@@ -6,7 +6,7 @@
 # d'entrainement) n'est pas necessaire pour servir des predictions et
 # n'est donc jamais copie dans l'image (voir .dockerignore).
 
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 # Dependances systeme requises par opencv-python (libGL) et curl pour le healthcheck
 RUN apt-get update && apt-get install -y --no-install-recommends \
