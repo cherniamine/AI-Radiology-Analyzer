@@ -1,11 +1,14 @@
 # AI Radiology Analyzer
 
 [![CI](https://github.com/cherniamine/AI-Radiology-Analyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/cherniamine/AI-Radiology-Analyzer/actions/workflows/ci.yml)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-success?style=for-the-badge&logo=streamlit)](https://ai-radiology-analyzer-mdruw7j6zcr8kpjldg33cp.streamlit.app)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 Classification de radiographies pulmonaires (COVID-19, opacité pulmonaire, pneumonie virale, normal) par réseau de neurones convolutif, avec cartes d'attention Grad-CAM et interface Streamlit interactive.
+
+👉 **[Tester la démo en ligne](https://ai-radiology-analyzer-mdruw7j6zcr8kpjldg33cp.streamlit.app)** — aucune installation requise.
 
 > **Avertissement.** Ce projet est un prototype académique à but pédagogique. Il ne fournit aucune valeur diagnostique et ne doit en aucun cas remplacer l'avis d'un radiologue ou d'un médecin.
 
@@ -14,6 +17,7 @@ Classification de radiographies pulmonaires (COVID-19, opacité pulmonaire, pneu
 ## Sommaire
 
 - [Aperçu](#aperçu)
+- [Démo en ligne](#démo-en-ligne)
 - [Captures d'écran](#captures-décran)
 - [Pipeline](#pipeline)
 - [Résultats](#résultats)
@@ -44,6 +48,23 @@ Le projet couvre l'ensemble du pipeline de classification d'images médicales :
 - **Explicabilité** via Grad-CAM : vue comparative côte à côte (original / heatmap / fusion), transparence ajustable par image, export PNG individuel de chaque vue
 - **Rapport structuré par gabarit** (`app/report_generator.py`) : observations, impression et recommandation adaptées à la classe prédite, exportable en PDF (original + Grad-CAM + fusion + rapport) et en JSON
 - **Interface applicative** (Streamlit) permettant de déposer des radiographies et d'obtenir un rapport exportable (CSV, PDF, JSON) et des visualisations (ZIP)
+
+## Démo en ligne
+
+L'application est déployée publiquement et testable directement dans le navigateur, sans installation :
+
+👉 **https://ai-radiology-analyzer-mdruw7j6zcr8kpjldg33cp.streamlit.app**
+
+**Disponible dans la démo publique :**
+- ✅ Analyse de radiographies thoraciques (4 classes)
+- ✅ Explicabilité Grad-CAM
+- ✅ Interface multilingue (français, anglais, arabe)
+- ✅ Génération de rapports (PDF & JSON)
+- ✅ Historique des analyses
+- ✅ Paramètres modifiables
+
+**Non disponible dans cette démo :**
+- ⚠️ **Assistant IA** — nécessite un serveur Ollama local ; désactivé sur le déploiement hébergé.
 
 ## Captures d'écran
 
