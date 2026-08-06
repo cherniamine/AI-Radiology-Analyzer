@@ -16,6 +16,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "app"))
 
+from assistant.assistant import ask  # noqa: E402
 from assistant.rag import answer_question  # noqa: E402
 from assistant.prompts import build_system_prompt, build_user_prompt, REFUSAL_MESSAGES, SUGGESTED_QUESTIONS  # noqa: E402
 from assistant.retriever import RetrievedChunk, Chunk  # noqa: E402
@@ -122,3 +123,22 @@ class TestAnswerQuestionMockedSuccess:
         with patch("assistant.providers.ollama_provider.requests.post", return_value=fake_response) as mock_post:
             answer_question("question", language="fr", ollama_model="llama3:8b")
             assert mock_post.call_args.kwargs["json"]["model"] == "llama3:8b"
+
+
+def test_ask_accepts_explicit_llm_provider_settings():
+    with patch("assistant.rag.answer_question") as mock_answer_question:
+        ask(
+            "Quel est l'impact de Grad-CAM ?",
+            language="fr",
+            llm_provider="ollama",
+            ollama_base_url="http://localhost:11434",
+            ollama_model="qwen3:8b",
+        )
+
+    mock_answer_question.assert_called_once_with(
+        question="Quel est l'impact de Grad-CAM ?",
+        language="fr",
+        llm_provider="ollama",
+        ollama_base_url="http://localhost:11434",
+        ollama_model="qwen3:8b",
+    )
