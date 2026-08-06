@@ -9,7 +9,8 @@ ce qui permet de faire evoluer l'architecture interne sans toucher a l'UI.
 
 from __future__ import annotations
 
-from .rag import AssistantAnswer, answer_question
+import importlib
+from .rag import AssistantAnswer
 
 
 def ask(
@@ -25,7 +26,8 @@ def ask(
     modifies en session sans coupler ce module a Streamlit.
     """
     from config import config
-    return answer_question(
+    rag = importlib.import_module(".rag", __package__)
+    return rag.answer_question(
         question=question,
         language=language,
         llm_provider=llm_provider or config.llm_provider,
